@@ -45,7 +45,9 @@ def print_summary(report: MatrixReport) -> None:
     rate = report.pass_rate * 100 if total else 0.0
 
     print("\n" + "=" * 60)
-    print(f"Matrix eval summary  suite={report.suite_name}  commit={report.commit_sha}")
+    print(
+        f"Matrix eval summary  matrix={report.matrix_name}  commit={report.commit_sha}"
+    )
     print(f"Cases: {total}  Passed: {passed}  Pass rate: {rate:.1f}%")
     print("=" * 60)
 
@@ -74,7 +76,7 @@ def print_summary(report: MatrixReport) -> None:
             if row.error:
                 print(f"           error: {row.error[:120]}")
 
-    if report.suite_name == "hashline_hypotheses":
+    if report.matrix_name == "hashline_hypotheses":
         _print_hashline_hypothesis_analysis(report, by_variant)
 
     print("=" * 60 + "\n")
@@ -152,14 +154,14 @@ def _print_hashline_hypothesis_analysis(
 
 def new_matrix_report(
     commit_sha: str,
-    suite_path: str,
-    suite_name: str,
+    matrix_path: str,
+    matrix_name: str,
     cases_path: str,
 ) -> MatrixReport:
     return MatrixReport(
         commit_sha=commit_sha,
         timestamp=now_iso(),
-        suite_path=suite_path,
-        suite_name=suite_name,
+        matrix_path=matrix_path,
+        matrix_name=matrix_name,
         cases_path=cases_path,
     )

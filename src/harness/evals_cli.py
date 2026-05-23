@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from harness.cases import load_cases
 from harness.observability import get_commit_sha, setup_observability
 from harness.report import new_matrix_report, print_summary, write_aggregate_report
-from harness.suites import build_tool_set_registry, variant_from_tool_set
+from harness.matrices import build_tool_set_registry, variant_from_tool_set
 from harness.task import evaluate_case
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,8 +45,8 @@ async def run_single_case(
 
     report = new_matrix_report(
         commit_sha=get_commit_sha(),
-        suite_path="single",
-        suite_name="single",
+        matrix_path="single",
+        matrix_name="single",
         cases_path=str(cases_path),
     )
     report.results.append(result)

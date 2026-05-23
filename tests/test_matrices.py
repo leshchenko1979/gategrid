@@ -3,16 +3,17 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from harness.suites import load_suite, resolve_suite
+from harness.matrices import resolve_matrix
+from harness.models import MatrixConfig
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPERIMENTS = ROOT / "experiments"
 CASES = EXPERIMENTS / "cases"
 
 
-def test_resolve_suite_ci() -> None:
-    resolved = resolve_suite(EXPERIMENTS / "suites" / "ci.yaml", EXPERIMENTS, CASES)
-    assert resolved.suite_name == "ci"
+def test_resolve_matrix_ci() -> None:
+    resolved = resolve_matrix(EXPERIMENTS / "matrices" / "ci.yaml", EXPERIMENTS, CASES)
+    assert resolved.matrix_name == "ci"
     assert len(resolved.variants) == 1
     assert resolved.variants[0].tooling_name == "baseline"
     assert len(resolved.cases) == 2
@@ -20,19 +21,21 @@ def test_resolve_suite_ci() -> None:
     assert len(resolved.variants[0].tools) == 5
 
 
-def test_resolve_suite_full() -> None:
-    resolved = resolve_suite(EXPERIMENTS / "suites" / "full.yaml", EXPERIMENTS, CASES)
-    assert resolved.suite_name == "full"
+def test_resolve_matrix_full() -> None:
+    resolved = resolve_matrix(
+        EXPERIMENTS / "matrices" / "full.yaml", EXPERIMENTS, CASES
+    )
+    assert resolved.matrix_name == "full"
     assert len(resolved.variants) == 4
     assert len(resolved.cases) == 5
     assert len(resolved.variants) * len(resolved.cases) == 20
 
 
-def test_resolve_suite_hashline_hypotheses() -> None:
-    resolved = resolve_suite(
-        EXPERIMENTS / "suites" / "hashline_hypotheses.yaml", EXPERIMENTS, CASES
+def test_resolve_matrix_hashline_hypotheses() -> None:
+    resolved = resolve_matrix(
+        EXPERIMENTS / "matrices" / "hashline_hypotheses.yaml", EXPERIMENTS, CASES
     )
-    assert resolved.suite_name == "hashline_hypotheses"
+    assert resolved.matrix_name == "hashline_hypotheses"
     assert len(resolved.variants) == 5
     assert len(resolved.cases) == 10
     assert len(resolved.variants) * len(resolved.cases) == 50
@@ -46,6 +49,13 @@ def test_resolve_suite_hashline_hypotheses() -> None:
     }
 
 
-def test_suite_requires_matrix() -> None:
+def test_matrix_requires_cases() -> None:
     with pytest.raises(ValidationError):
-        load_suite(EXPERIMENTS / "matrix.yaml")
+        MatrixConfig.model_validate(
+            {
+                "tool_sets": ["baseline"],
+                "models": ["minimax-m2.7"],
+                "cases": [],
+                "case_sets": [],
+            }
+        )

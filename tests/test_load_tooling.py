@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from harness.load_tooling import load_tool_function, resolve_experiments_path
-from harness.suites import build_tool_set_registry, load_tool_set
+from harness.matrices import build_tool_set_registry, load_tool_set
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPERIMENTS = ROOT / "experiments"

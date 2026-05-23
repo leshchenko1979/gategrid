@@ -42,22 +42,18 @@ class CaseSet(BaseModel):
     cases: list[str]
 
 
-class SuiteMatrix(BaseModel):
+class MatrixConfig(BaseModel):
+    name: str | None = None
     tool_sets: list[str]
     models: list[str]
     cases: list[str] = Field(default_factory=list)
     case_sets: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def require_cases(self) -> SuiteMatrix:
+    def require_cases(self) -> MatrixConfig:
         if not self.cases and not self.case_sets:
             raise ValueError("matrix must include cases and/or case_sets")
         return self
-
-
-class SuiteConfig(BaseModel):
-    name: str | None = None
-    matrix: SuiteMatrix
 
 
 class CaseResult(BaseModel):
@@ -79,8 +75,8 @@ class CaseResult(BaseModel):
 class MatrixReport(BaseModel):
     commit_sha: str
     timestamp: str
-    suite_path: str
-    suite_name: str
+    matrix_path: str
+    matrix_name: str
     cases_path: str
     results: list[CaseResult] = Field(default_factory=list)
 

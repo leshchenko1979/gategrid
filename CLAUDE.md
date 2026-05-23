@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Matrix evals over **cases** (YAML) × **tool sets** (YAML) × **models** (presets in `config.py`). Suites declare the runnable `matrix:`; tool sets hold `system_prompt` + `tools:` paths; each `.py` under `tooling/` exports one tool function.
+Matrix evals over **cases** (YAML) × **tool sets** (YAML) × **models** (presets in `config.py`). Matrices declare the runnable cross-product; tool sets hold `system_prompt` + `tools:` paths; each `.py` under `tooling/` exports one tool function.
 
 ## Run locally
 
@@ -12,7 +12,7 @@ pip install -e ".[dev]"
 # .env: MINIMAX_API_KEY
 
 python -m harness.matrix run
-python -m harness.matrix run --suite experiments/suites/ci.yaml
+python -m harness.matrix run --matrix experiments/matrices/ci.yaml
 python -m harness.evals run --case add_docstring --tool-set baseline
 python -m harness.matrix run --variant strict/verbose/minimax-m2.7
 ```
@@ -21,12 +21,11 @@ python -m harness.matrix run --variant strict/verbose/minimax-m2.7
 
 - `experiments/tool_sets/` — agent prompts + tool path lists (YAML only bundling)
 - `experiments/case_sets/` — named case lists
-- `experiments/suites/` — required `matrix:` block per runnable suite
+- `experiments/matrices/` — runnable matrix definitions (`tool_sets`, `models`, `cases`/`case_sets`)
 - `experiments/cases/` — case content (one YAML per case)
 - `experiments/tooling/harness/` — thin wrappers over `harness.tools` (one tool per file)
 - `experiments/tooling/opencrabs/` — OpenCrabs-style tools (one tool per file)
-- `experiments/matrix.yaml` — `default_suite:` pointer only
-- `src/harness/` — loader, sandbox, suites resolver, matrix CLI
+- `src/harness/` — loader, sandbox, matrices resolver, matrix CLI
 
 ## Tooling rules
 
@@ -42,14 +41,14 @@ python -m harness.matrix run --variant strict/verbose/minimax-m2.7
 ## Models
 
 - Presets in `src/harness/config.py` (`MODEL_PRESETS`).
-- Suite `matrix.models` lists preset keys (e.g. `minimax-m2.7`).
+- Matrix `models` lists preset keys (e.g. `minimax-m2.7`).
 
-## Hashline hypothesis suite
+## Hashline hypothesis matrix
 
 Isolated OpenCrabs variants (H1 doc fix, H2 fuzzy `str_replace`, H3 empty-hash collisions) vs `opencrabs_original` and `baseline`:
 
 ```bash
-python -m harness.matrix run --suite experiments/suites/hashline_hypotheses.yaml
+python -m harness.matrix run --matrix experiments/matrices/hashline_hypotheses.yaml
 ```
 
 **10 cases** (4 small + 6 large ~100–150 lines): indent traps, ambiguous replace, hash collisions, docstring insert, rename — **50 matrix runs** (5 variants × 10 cases).

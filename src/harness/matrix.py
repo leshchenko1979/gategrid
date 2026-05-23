@@ -6,28 +6,20 @@ import logging
 import uuid
 from pathlib import Path
 
-import yaml
 from dotenv import load_dotenv
 
 from harness.models import ExperimentVariant
 from harness.observability import get_commit_sha, setup_observability
 from harness.report import new_matrix_report, print_summary, write_aggregate_report
-from harness.suites import MatrixRootConfig, resolve_suite
+from harness.matrices import resolve_matrix
 from harness.task import evaluate_case
 
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
 EXPERIMENTS = ROOT / "experiments"
-DEFAULT_MATRIX = EXPERIMENTS / "matrix.yaml"
+DEFAULT_MATRIX = EXPERIMENTS / "matrices" / "full.yaml"
 DEFAULT_CASES = EXPERIMENTS / "cases"
-
-
-def load_matrix_root(path: Path) -> MatrixRootConfig:
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if data is None:
-        data = {}
-    return MatrixRootConfig.model_validate(data)
 
 
 def filter_variants(
@@ -39,7 +31,7 @@ def filter_variants(
 
 
 async def run_matrix(
-    suite_path: Path,
+    matrix_path: Path,
     cases_path: Path,
     variant_filter: str | None = None,
     trace: bool = False,
@@ -47,8 +39,8 @@ async def run_matrix(
     setup_observability()
     load_dotenv(ROOT / ".env")
 
-    suite_path = suite_path.resolve()
-    resolved = resolve_suite(suite_path, EXPERIMENTS, cases_path.resolve())
+    matrix_path = matrix_path.resolve()
+    resolved = resolve_matrix(matrix_path, EXPERIMENTS, cases_path.resolve())
     variants = filter_variants(resolved.variants, variant_filter)
     if not variants:
         raise ValueError(f"No variants matched filter: {variant_filter!r}")
@@ -56,14 +48,14 @@ async def run_matrix(
     run_id = str(uuid.uuid4())[:8] if trace else None
     report = new_matrix_report(
         commit_sha=get_commit_sha(),
-        suite_path=resolved.suite_path,
-        suite_name=resolved.suite_name,
+        matrix_path=resolved.matrix_path,
+        matrix_name=resolved.matrix_name,
         cases_path=str(cases_path),
     )
 
     logger.info(
-        "Running suite %s: %d variants x %d cases",
-        resolved.suite_name,
+        "Running matrix %s: %d variants x %d cases",
+        resolved.matrix_name,
         len(variants),
         len(resolved.cases),
     )
@@ -85,18 +77,12 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run file-editing eval matrix")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    run_parser = sub.add_parser("run", help="Run evaluation suite")
-    run_parser.add_argument(
-        "--suite",
-        type=Path,
-        default=None,
-        help="Path to suite YAML (default from experiments/matrix.yaml)",
-    )
+    run_parser = sub.add_parser("run", help="Run evaluation matrix")
     run_parser.add_argument(
         "--matrix",
         type=Path,
-        default=DEFAULT_MATRIX,
-        help="Path to matrix.yaml (default_suite pointer)",
+        default=None,
+        help="Path to matrix YAML (default: experiments/matrices/full.yaml)",
     )
     run_parser.add_argument(
         "--cases",
@@ -118,13 +104,10 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
     if args.command == "run":
-        suite_path = args.suite
-        if suite_path is None:
-            root = load_matrix_root(args.matrix.resolve())
-            suite_path = root.resolve_default_suite_path(EXPERIMENTS)
+        matrix_path = args.matrix or DEFAULT_MATRIX
         code = asyncio.run(
             run_matrix(
-                suite_path=suite_path,
+                matrix_path=matrix_path,
                 cases_path=args.cases,
                 variant_filter=args.variant,
                 trace=args.trace,

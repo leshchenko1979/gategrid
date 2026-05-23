@@ -1,107 +1,117 @@
 # LLM File-Editing Eval Harness
 
-Evaluation harness for a **pure file-editing** pydantic-ai agent. **Tool sets** and **case sets** are YAML libraries; each **suite** file declares a `matrix:` (tool_sets × models × cases). Per-tool code lives under `experiments/tooling/` (one function per `.py`).
+Matrix evaluation for **pure file-editing** agents built with [pydantic-ai](https://ai.pydantic.dev/). Experiments are declared in YAML; Python under `experiments/tooling/` supplies one tool function per file.
+
+**Matrix** = `tool_sets` × `models` × `cases` (inline or via `case_sets`). Pass/fail is **exact file content match** against `expected_output`.
 
 ## Setup
 
 ```bash
-cd harness_test
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
 cp .env.example .env
-# Set MINIMAX_API_KEY
+# Set API keys required by your matrix's model presets (see src/harness/config.py)
 ```
 
 ## Run
 
-**Full suite** (default from [`experiments/matrix.yaml`](experiments/matrix.yaml)):
+Default matrix: [`experiments/matrices/full.yaml`](experiments/matrices/full.yaml).
 
 ```bash
 python -m harness.matrix run
+python -m harness.matrix run --matrix experiments/matrices/ci.yaml
+python -m harness.matrix run --variant <tool-set>/<model-preset>
+python -m harness.evals run --case <case_name> --tool-set <tool_set>
+python -m harness.matrix run --trace   # JSONL traces → reports/traces/
 ```
 
-**CI / smoke suite:**
+Installed entry points: `harness-matrix`, `harness-evals`.
 
-```bash
-python -m harness.matrix run --suite experiments/suites/ci.yaml
-```
+## Layout
 
-**Single variant:**
+| Path | Role |
+|------|------|
+| `experiments/cases/` | One YAML per edit task |
+| `experiments/case_sets/` | Named lists of case names |
+| `experiments/tool_sets/` | `system_prompt` + `tools:` path list |
+| `experiments/tooling/` | Per-tool `.py` modules (no prompt bundling) |
+| `experiments/matrices/` | Runnable matrix definitions (`tool_sets` × `models` × cases) |
+| `src/harness/` | Loader, sandbox, CLI, model presets |
 
-```bash
-python -m harness.matrix run --variant baseline/minimax-m2.7
-```
+**Tooling rules:** no `SYSTEM_PROMPT` / `TOOLS` / `register(agent)` bundles in tool `.py` files. Harness wrappers live in `tooling/harness/` (delegate to `harness.tools`); other families (e.g. `tooling/opencrabs/`) compose via their own tool-set YAML.
 
-**One case:**
+Models should use **workspace-relative** paths (`app.py`). The sandbox accepts absolutes inside the workspace and normalizes macOS `/private/var` vs `/var`.
 
-```bash
-python -m harness.evals run --case add_docstring
-python -m harness.evals run --case add_docstring --tool-set minimal
-```
-
-**JSONL traces** (no Logfire):
-
-```bash
-python -m harness.matrix run --trace
-```
-
-## Suite format
-
-[`experiments/suites/full.yaml`](experiments/suites/full.yaml):
+## Matrix
 
 ```yaml
-matrix:
-  tool_sets:
-    - baseline
-    - minimal
-    - strict/verbose
-    - opencrabs_original
-  models:
-    - minimax-m2.7
-  case_sets:
-    - all
+# experiments/matrices/example.yaml
+tool_sets:
+  - baseline
+  - minimal
+models:
+  - minimax-m2.7          # key in MODEL_PRESETS (src/harness/config.py)
+case_sets:
+  - smoke                 # or list cases inline under cases:
 ```
 
-Suite `name` is optional (defaults to the file stem, e.g. `ci.yaml` → `ci`).
+Matrix `name` is optional (defaults to the file stem).
 
-## Tool set format
-
-[`experiments/tool_sets/baseline.yaml`](experiments/tool_sets/baseline.yaml) — prompt + list of per-tool `.py` paths (no bundling in Python):
+## Tool set
 
 ```yaml
-name: baseline
+# experiments/tool_sets/example.yaml
+name: example
 system_prompt: |
   You are a precise file editing agent...
 tools:
   - tooling/harness/ls.py
   - tooling/harness/read_file.py
-  # ...
 ```
 
-## New tool set
+Paths are relative to `experiments/`.
 
-1. Add one-tool modules under `experiments/tooling/` (delegate to [`src/harness/tools.py`](src/harness/tools.py) or opencrabs helpers).
-2. Create `experiments/tool_sets/my_set.yaml` with `name`, `system_prompt`, and `tools:`.
-3. Reference `my_set` in a suite `matrix.tool_sets` list.
+**Add a tool set:** (1) add one-tool modules under `experiments/tooling/`, (2) create `experiments/tool_sets/<name>.yaml`, (3) reference `<name>` in a matrix `tool_sets` list.
 
-## Configuration
+## Case
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `MINIMAX_API_KEY` | — | Required for MiniMax |
-| `OPENAI_BASE_URL` | `https://api.minimax.io/v1` | OpenAI-compatible endpoint |
-| `HARNESS_MODEL` | `MiniMax-M2.7` | Model name |
-| `LOGFIRE_TOKEN` | — | Optional cloud traces |
+```yaml
+# experiments/cases/example.yaml
+name: example
+instruction: Describe the edit for the model.
+file_name: target.py
+initial_content: |
+  ...
+expected_output: |
+  ...
+tags: []   # optional; surfaced in reports
+```
 
-Use workspace-relative paths in tool calls (e.g. `app.py`). The harness normalizes absolute paths inside the sandbox.
+**Case set** (`experiments/case_sets/example.yaml`): `name` + `cases: [case_stem, ...]` (stems match `experiments/cases/<stem>.yaml`).
 
-## Reports
+## Models
+
+Presets live in [`src/harness/config.py`](src/harness/config.py) (`MODEL_PRESETS`). Each preset defines `model_name`, `base_url`, and `api_key_env`. Matrix `models` lists preset keys.
+
+Optional overrides (any preset): `OPENAI_BASE_URL`, `HARNESS_MODEL`.
+
+This repo ships `minimax-m2.7` → set `MINIMAX_API_KEY` (see `.env.example`). Add presets and env vars when wiring other providers.
+
+## Reports & metrics
 
 - Aggregate JSON: `reports/{timestamp}_{sha}_matrix.json`
-- Optional traces: `reports/traces/{run_id}.jsonl`
+- Traces: `reports/traces/{run_id}.jsonl` (with `--trace`)
+- Optional Logfire: `LOGFIRE_TOKEN` (`send_to_logfire='if-token-present'`)
+
+Comparison metrics (pass/fail remains file match only): **turns**, **tokens_spent**, **tool_failures**, **duration_ms**. See project notes in `CLAUDE.md` for definitions.
 
 ## CI
 
-`.github/workflows/evals.yml` — set `MINIMAX_API_KEY` secret; optional `LOGFIRE_TOKEN`.
+[`.github/workflows/evals.yml`](.github/workflows/evals.yml) — configure secrets for the model presets your matrix uses (e.g. `MINIMAX_API_KEY`); optional `LOGFIRE_TOKEN`.
+
+## Extending this repo
+
+- **New cases / tool sets / matrices:** add YAML under `experiments/` and reference them in a matrix file.
+- **Specialized studies:** e.g. hashline hypotheses — `experiments/matrices/hashline_hypotheses.yaml` and [`docs/README.md`](docs/README.md).

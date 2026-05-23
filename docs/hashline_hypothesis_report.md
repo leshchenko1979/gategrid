@@ -87,7 +87,7 @@ flowchart LR
 
 | Parameter | Value |
 | --------- | ----- |
-| Suite     | [hashline_hypotheses.yaml](../experiments/suites/hashline_hypotheses.yaml) |
+| Matrix    | [hashline_hypotheses.yaml](../experiments/matrices/hashline_hypotheses.yaml) |
 | Runs      | 5 variants × 10 cases = **50**; model `minimax-m2.7` |
 | Reference | **original OpenCrabs toolset** (`opencrabs_original`) |
 
@@ -161,7 +161,7 @@ H3 read override: [opencrabs_h3/read_file.py](../experiments/tooling/opencrabs_h
 
 ### Test corpus
 
-Suite case list: [hashline_hypotheses.yaml](../experiments/suites/hashline_hypotheses.yaml). Ten cases under [experiments/cases/](../experiments/cases/).
+Matrix case list: [hashline_hypotheses.yaml](../experiments/matrices/hashline_hypotheses.yaml). Ten cases under [experiments/cases/](../experiments/cases/).
 
 | Case | Task | Size | Hypotheses |
 | ---- | ---- | ---- | ---------- |
@@ -251,7 +251,7 @@ One isolated change per variant vs the **original OpenCrabs toolset**. Pass crit
 ```bash
 pip install -e ".[report]"
 # matrix runner CLI (harness_test package)
-python -m harness.matrix run --suite experiments/suites/hashline_hypotheses.yaml
+python -m harness.matrix run --matrix experiments/matrices/hashline_hypotheses.yaml
 python docs/_build_report_viz.py
 jupyter nbconvert --execute --to notebook docs/hashline_hypothesis_report.ipynb
 ```
@@ -267,7 +267,7 @@ Compact path index; tool-parameter detail: [§5 tool surface](#tool-surface-comp
 | Component | Path |
 | --------- | ---- |
 | Tool sets | [opencrabs_original.yaml](../experiments/tool_sets/opencrabs_original.yaml), [opencrabs_h1_docs.yaml](../experiments/tool_sets/opencrabs_h1_docs.yaml), [opencrabs_h2_fuzzy.yaml](../experiments/tool_sets/opencrabs_h2_fuzzy.yaml), [opencrabs_h3_collision.yaml](../experiments/tool_sets/opencrabs_h3_collision.yaml), [baseline.yaml](../experiments/tool_sets/baseline.yaml) |
-| Suite / cases | [hashline_hypotheses.yaml](../experiments/suites/hashline_hypotheses.yaml), [experiments/cases/](../experiments/cases/) |
+| Matrix / cases | [hashline_hypotheses.yaml](../experiments/matrices/hashline_hypotheses.yaml), [experiments/cases/](../experiments/cases/) |
 | Hashline core | [hashline.py](../experiments/tooling/opencrabs/hashline.py) |
 | Fuzzy matcher (H2) | [fuzzy_replace.py](../src/harness/fuzzy_replace.py) |
 

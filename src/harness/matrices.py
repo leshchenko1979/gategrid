@@ -3,11 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel
 
 from harness.cases import load_cases_by_names
 from harness.load_tooling import load_tool_functions
-from harness.models import CaseSet, EditCase, ExperimentVariant, SuiteConfig, ToolSet
+from harness.models import CaseSet, EditCase, ExperimentVariant, MatrixConfig, ToolSet
 
 
 def _load_yaml(path: Path) -> dict:
@@ -27,15 +27,15 @@ def load_case_set(path: Path) -> CaseSet:
     return CaseSet.model_validate(data)
 
 
-def load_suite(path: Path) -> SuiteConfig:
+def load_matrix(path: Path) -> MatrixConfig:
     data = _load_yaml(path)
-    return SuiteConfig.model_validate(data)
+    return MatrixConfig.model_validate(data)
 
 
-def suite_display_name(suite_path: Path, suite: SuiteConfig) -> str:
-    if suite.name:
-        return suite.name
-    return suite_path.stem
+def matrix_display_name(matrix_path: Path, matrix: MatrixConfig) -> str:
+    if matrix.name:
+        return matrix.name
+    return matrix_path.stem
 
 
 def _registry_yaml_dir(experiments_dir: Path, subdir: str) -> Path:
@@ -81,10 +81,10 @@ def variant_from_tool_set(
 
 
 def resolve_case_names(
-    suite: SuiteConfig, case_set_registry: dict[str, CaseSet]
+    matrix: MatrixConfig, case_set_registry: dict[str, CaseSet]
 ) -> list[str]:
-    names: list[str] = list(suite.matrix.cases)
-    for ref in suite.matrix.case_sets:
+    names: list[str] = list(matrix.cases)
+    for ref in matrix.case_sets:
         case_set = case_set_registry.get(ref)
         if case_set is None:
             raise ValueError(f"Unknown case set {ref!r}")
@@ -96,55 +96,43 @@ def resolve_case_names(
             seen.add(name)
             unique.append(name)
     if not unique:
-        raise ValueError(
-            "Suite matrix must specify at least one case via cases or case_sets"
-        )
+        raise ValueError("Matrix must specify at least one case via cases or case_sets")
     return unique
 
 
-class ResolvedSuite(BaseModel):
-    suite_name: str
-    suite_path: str
+class ResolvedMatrix(BaseModel):
+    matrix_name: str
+    matrix_path: str
     variants: list[ExperimentVariant]
     cases: list[EditCase]
 
 
-def resolve_suite(
-    suite_path: Path,
+def resolve_matrix(
+    matrix_path: Path,
     experiments_dir: Path,
     cases_dir: Path,
-) -> ResolvedSuite:
-    suite_path = suite_path.resolve()
+) -> ResolvedMatrix:
+    matrix_path = matrix_path.resolve()
     experiments_dir = experiments_dir.resolve()
-    suite = load_suite(suite_path)
+    matrix = load_matrix(matrix_path)
 
     tool_set_registry = build_tool_set_registry(experiments_dir)
     case_set_registry = _build_case_set_registry(experiments_dir)
 
     variants: list[ExperimentVariant] = []
-    for tool_set_name in suite.matrix.tool_sets:
+    for tool_set_name in matrix.tool_sets:
         tool_set = tool_set_registry.get(tool_set_name)
         if tool_set is None:
             raise ValueError(f"Unknown tool set {tool_set_name!r}")
-        for model_id in suite.matrix.models:
+        for model_id in matrix.models:
             variants.append(variant_from_tool_set(tool_set, model_id, experiments_dir))
 
-    case_names = resolve_case_names(suite, case_set_registry)
+    case_names = resolve_case_names(matrix, case_set_registry)
     cases = load_cases_by_names(cases_dir, case_names)
 
-    return ResolvedSuite(
-        suite_name=suite_display_name(suite_path, suite),
-        suite_path=str(suite_path),
+    return ResolvedMatrix(
+        matrix_name=matrix_display_name(matrix_path, matrix),
+        matrix_path=str(matrix_path),
         variants=variants,
         cases=cases,
     )
-
-
-class MatrixRootConfig(BaseModel):
-    default_suite: str = Field(default="suites/full.yaml")
-
-    def resolve_default_suite_path(self, experiments_dir: Path) -> Path:
-        path = Path(self.default_suite)
-        if not path.is_absolute():
-            path = experiments_dir / path
-        return path.resolve()

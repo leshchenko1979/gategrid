@@ -29,7 +29,7 @@ jobs:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           LOGFIRE_TOKEN: ${{ secrets.LOGFIRE_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
-        run: uv run --frozen --no-dev python -m harness.matrix run --suite experiments/suites/ci.yaml
+        run: uv run --frozen --no-dev python -m harness.matrix run --matrix experiments/matrices/ci.yaml
 
       - name: Upload Eval Report
         uses: actions/upload-artifact@v4
