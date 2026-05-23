@@ -105,7 +105,7 @@ flowchart LR
 | H1: docs fix                   | `opencrabs_h1_docs`      | [opencrabs_h1_docs.yaml](../experiments/tool_sets/opencrabs_h1_docs.yaml) | Prompt + docstrings only |
 | H2: fuzzy replace              | `opencrabs_h2_fuzzy`     | [opencrabs_h2_fuzzy.yaml](../experiments/tool_sets/opencrabs_h2_fuzzy.yaml) | **One** fuzzy `str_replace` instead of two edit tools |
 | H3: empty-hash read            | `opencrabs_h3_collision` | [opencrabs_h3_collision.yaml](../experiments/tool_sets/opencrabs_h3_collision.yaml) | H3 [read_file](../experiments/tooling/opencrabs_h3/read_file.py) only |
-| **str_replace only**           | `baseline`               | [baseline.yaml](../experiments/tool_sets/baseline.yaml) | H4 reference — see below |
+| **H4 reference**               | `baseline`               | [baseline.yaml](../experiments/tool_sets/baseline.yaml) | Simplified reference toolset — see below |
 
 ### H4 reference: simplified tool set (`baseline`)
 
@@ -143,7 +143,7 @@ flowchart LR
 | H3 collision       | [opencrabs_h3_collision.yaml](../experiments/tool_sets/opencrabs_h3_collision.yaml) | 6 | 2 | **32** (read impl only) |
 | H4 reference       | [baseline.yaml](../experiments/tool_sets/baseline.yaml) | 5 | 1 | **8** |
 
-The reference tool set has **~4×** fewer total parameters than the original bundle (8 vs 32) and one edit API vs two—along with plain read/explore tools, a concrete H4 confound beyond indentation. Charts label this variant **`str_replace only`**; eval YAML id remains `baseline`.
+The reference tool set has **~4×** fewer total parameters than the original bundle (8 vs 32) and one edit API vs two—along with plain read/explore tools, a concrete H4 confound beyond indentation. Eval matrix YAML id: `baseline`.
 
 | Tool                  | Params                        | Implementation |
 | --------------------- | ----------------------------- | -------------- |
@@ -198,7 +198,7 @@ One isolated change per variant vs the **original OpenCrabs toolset**. Pass crit
 
 ![Pass matrix](figures/pass_matrix_heatmap.png)
 
-**Failures vs original OpenCrabs toolset:** original — [whitespace_trap_yaml_large](../experiments/cases/whitespace_trap_yaml_large.yaml); H3 — [whitespace_trap](../experiments/cases/whitespace_trap.yaml), [indent_collision](../experiments/cases/indent_collision.yaml), [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml); H1 — [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml); str_replace only — [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml).
+**Failures vs original OpenCrabs toolset:** original — [whitespace_trap_yaml_large](../experiments/cases/whitespace_trap_yaml_large.yaml); H3 — [whitespace_trap](../experiments/cases/whitespace_trap.yaml), [indent_collision](../experiments/cases/indent_collision.yaml), [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml); H1 — [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml); H4 reference — [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml).
 
 ![Variant efficiency: turns, tokens, tool failures, duration](figures/efficiency_tokens_turns.png)
 
@@ -216,7 +216,7 @@ One isolated change per variant vs the **original OpenCrabs toolset**. Pass crit
 | H1: docs fix | 9/10 | 5.9 | 27,384 | 2 | 16.9s |
 | H2: fuzzy replace | **10/10** | 5.3 | 20,115 | 2 | 13.5s |
 | H3: empty-hash read | 7/10 | **9.0** | **46,785** | **4** | **25.3s** |
-| str_replace only | 9/10 | 4.9 | **8,412** | 3 | 11.7s |
+| H4 reference | 9/10 | 4.9 | **8,412** | 3 | 11.7s |
 
 ---
 

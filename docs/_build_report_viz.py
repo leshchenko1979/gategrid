@@ -26,7 +26,7 @@ VARIANT_LABELS = {
     "opencrabs_h1_docs": "H1: docs fix",
     "opencrabs_h2_fuzzy": "H2: fuzzy replace",
     "opencrabs_h3_collision": "H3: empty-hash read",
-    "baseline": "str_replace only",
+    "baseline": "H4: simplified reference",
 }
 H4_CASES = [
     "whitespace_trap",
@@ -164,7 +164,13 @@ def plot_efficiency(df: pd.DataFrame) -> None:
     for ax, values, title, ylabel, color in [
         (axes[0, 0], turns, "Mean LLM turns per case", "Mean turns", "#4C72B0"),
         (axes[0, 1], tokens, "Mean tokens per case", "Mean tokens", "#C44E52"),
-        (axes[1, 0], failures, "Tool failures (sum, 10 cases)", "Sum tool_failures", "#8172B2"),
+        (
+            axes[1, 0],
+            failures,
+            "Tool failures (sum, 10 cases)",
+            "Sum tool_failures",
+            "#8172B2",
+        ),
         (axes[1, 1], duration, "Mean task duration", "Mean duration (s)", "#CCB974"),
     ]:
         ax.bar(x, values, color=color)
