@@ -21,12 +21,18 @@ VARIANTS = [
     "baseline",
 ]
 VARIANT_LABELS = {
-    "opencrabs_original": "control",
-    "opencrabs_h1_docs": "H1 docs",
-    "opencrabs_h3_collision": "H3 collision",
-    "opencrabs_h2_fuzzy": "H2 fuzzy",
-    "baseline": "baseline",
+    "opencrabs_original": "OpenCrabs control",
+    "opencrabs_h1_docs": "H1: docs fix",
+    "opencrabs_h3_collision": "H3: empty-hash",
+    "opencrabs_h2_fuzzy": "H2: fuzzy replace",
+    "baseline": "str_replace only",
 }
+H4_CASES = [
+    "whitespace_trap",
+    "whitespace_trap_yaml",
+    "whitespace_trap_py_large",
+    "whitespace_trap_yaml_large",
+]
 CASE_ORDER = [
     "whitespace_trap",
     "whitespace_trap_yaml",
@@ -142,38 +148,38 @@ def plot_buckets(df: pd.DataFrame) -> None:
             for v in VARIANTS
         ]
 
-    py = df[df["tags"].apply(lambda t: "language:python" in t)]
-    yaml = df[df["tags"].apply(lambda t: "language:yaml" in t)]
+    h4_df = df[df["case_name"].isin(H4_CASES)]
     large = df[df["tags"].apply(lambda t: "size:large" in t)]
     small = df[df["tags"].apply(lambda t: "size:large" not in t)]
 
     x = np.arange(len(VARIANTS))
-    w = 0.35
-    axes[0].bar(x - w / 2, pass_rate(py), w, label="python")
-    axes[0].bar(x + w / 2, pass_rate(yaml), w, label="yaml")
+    axes[0].bar(x, pass_rate(h4_df), color="#4C72B0")
     axes[0].set_xticks(x)
     axes[0].set_xticklabels(
         [VARIANT_LABELS[v] for v in VARIANTS], rotation=30, ha="right"
     )
     axes[0].set_ylabel("Pass rate (%)")
-    axes[0].set_title("H4: by language tag")
-    axes[0].legend()
+    axes[0].set_title("H4 cases: indented py/yaml traps (n=4)")
     axes[0].set_ylim(0, 105)
 
-    axes[1].bar(x - w / 2, pass_rate(large), w, label="large")
-    axes[1].bar(x + w / 2, pass_rate(small), w, label="small")
+    w = 0.35
+    axes[1].bar(x - w / 2, pass_rate(large), w, label="large (6)")
+    axes[1].bar(x + w / 2, pass_rate(small), w, label="small (4)")
     axes[1].set_xticks(x)
     axes[1].set_xticklabels(
         [VARIANT_LABELS[v] for v in VARIANTS], rotation=30, ha="right"
     )
     axes[1].set_ylabel("Pass rate (%)")
-    axes[1].set_title("By size tag")
+    axes[1].set_title("All cases: file size")
     axes[1].legend()
     axes[1].set_ylim(0, 105)
 
     fig.tight_layout()
-    fig.savefig(FIGURES / "h4_and_size_buckets.png", dpi=150)
+    fig.savefig(FIGURES / "h4_cases_and_file_size.png", dpi=150)
     plt.close(fig)
+    old = FIGURES / "h4_and_size_buckets.png"
+    if old.exists():
+        old.unlink()
 
 
 def main() -> None:

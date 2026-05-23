@@ -1,224 +1,153 @@
 # Hashline edit evaluation — hypothesis results
 
-External evaluation of OpenCrabs-style hashline tooling via a Python port in the `harness_test` repository. **OpenCrabs upstream was not consulted** before this study was designed or run.
+External evaluation of OpenCrabs-style hashline tooling via a Python port in `harness_test`. **OpenCrabs upstream was not consulted** before this study was designed or run.
 
-**Artifacts:** this document, [interactive charts](hashline_hypothesis_report.ipynb), and raw matrix output [`reports/2026-05-23T13-22-35.666225+00-00_local-r_matrix.json`](../reports/2026-05-23T13-22-35.666225+00-00_local-r_matrix.json) (50 runs, `minimax-m2.7`).
+**Artifacts:** this document, [charts](hashline_hypothesis_report.ipynb), [matrix JSON](../reports/2026-05-23T13-22-35.666225+00-00_local-r_matrix.json) (50 runs, `minimax-m2.7`).
 
-**How to read:** background (what hashline is) → hypotheses → methodology → corpus → results → interpretation.
+**Implementers:** start at [§2 Quick reference](#2-quick-reference-for-implementers). Full methodology is [§5](#5-methodology) onward.
 
 ---
 
 ## 1. Introduction
 
-### Who ran this
-
-Researchers integrated OpenCrabs tools into `harness_test`—a matrix evaluation harness for LLM file-editing agents—to test four specific beliefs about `hashline_edit` and `read_file` behavior observed while porting Rust tooling to Python. This report is a **post-hoc summary** for OpenCrabs developers; it is **not** a merged change proposal or a Rust implementation audit.
-
-### Why it exists
-
-During porting, we noticed:
-
-- Tool descriptions referring to line-number IDs while read output uses content hashes.
-- Collision lines marked as `COLLISION|…` when duplicate line hashes occur.
-- A possible alternative: fuzzy line-block `str_replace` instead of hash-anchored edits.
-- A suspicion that indented Python and YAML fare worse with the hashline stack than with plain search/replace.
-
-We designed isolated tool-set variants—one change per hypothesis—and measured whether each improved end-to-end edit success.
-
-### What this document is / is not
+Researchers integrated OpenCrabs tools into `harness_test` to test four beliefs about `hashline_edit` / `read_file` observed while porting Rust tooling to Python. This is a **post-hoc report**, not a merged OpenCrabs PR or a Rust audit.
 
 | Is | Is not |
 |----|--------|
-| Reproducible eval report with methodology and results | Product sign-off for OpenCrabs |
-| Behavioral evidence from a Python port aligned with Rust hashline | Multi-model benchmark or CI gate |
-| Input for upstream docs/protocol decisions | Proof that Rust production code matches the port byte-for-byte |
-
-### Artifacts
-
-- **Report (prose):** this file
-- **Charts:** [hashline_hypothesis_report.ipynb](hashline_hypothesis_report.ipynb)
-- **Data:** matrix JSON under `reports/` (canonical run cited above)
+| Reproducible eval with methodology | Product sign-off |
+| Evidence from a Python port | Multi-model benchmark |
+| Input for docs/protocol decisions | Proof of byte-identical Rust behavior |
 
 ---
 
-## 2. Executive summary
+## 2. Quick reference for implementers
+
+| If you are… | Verdict | Code in this repo |
+|-------------|---------|-------------------|
+| **Fuzzy line replace (H2)** | **Supported** — 10/10 pass; see [§8](#8-interpretation) | [`fuzzy_replace.py`](../src/harness/fuzzy_replace.py), [`str_replace_fuzzy`](../experiments/tooling/harness/str_replace_fuzzy.py), [`opencrabs_h2_fuzzy.yaml`](../experiments/tool_sets/opencrabs_h2_fuzzy.yaml) |
+| **Hashline docs (H1)** | Inconclusive — still align docs | [`read_file`](../experiments/tooling/opencrabs/read_file.py), [`hashline_edit`](../experiments/tooling/opencrabs/hashline_edit.py), [`hashline.py`](../experiments/tooling/opencrabs/hashline.py) |
+| **Collision display (H3)** | **Rejected** — do not ship `  \|` default | [`format_read_hashline`](../experiments/tooling/opencrabs/hashline.py), [H3 `read_file`](../experiments/tooling/opencrabs_h3/read_file.py) |
+| **vs non-hashline edit (H4)** | Mixed — not uniformly worse | Reference tool set [`baseline.yaml`](../experiments/tool_sets/baseline.yaml) → [`str_replace`](../src/harness/tools.py) only (no `hashline_edit`) |
+
+Algorithm reference for H2: port of [Codex `seek_sequence`](https://github.com/openai/codex/blob/main/codex-rs/apply-patch/src/seek_sequence.rs) (exact → trim end → trim both → Unicode normalize). **No OpenCrabs Rust equivalent exists yet** in this eval.
+
+[Full implementation map](#appendix-implementation-map-harness_test) · [Reproduce](#10-recommendations-limitations-and-reproducibility)
+
+---
+
+## 3. Executive summary
 
 | ID | Hypothesis | Verdict | Headline |
 |----|------------|---------|----------|
-| **H1** | Fixing docs to describe `HASH\|content` (not line numbers) improves success | **Inconclusive** | 9/10 pass—same as control; gained `whitespace_trap_yaml_large`, lost `rename_symbol_large` |
-| **H2** | Fuzzy 4-pass `str_replace` beats `edit_file` + `hashline_edit` | **Supported** | **10/10**—only variant with a perfect score; best large-file pass rate |
-| **H3** | Showing collisions as `  \|line` instead of `COLLISION\|line` on read improves success | **Rejected** | 7/10—worst OpenCrabs variant; 2/4 on small cases; highest mean turns and tokens |
-| **H4** | Hashline stack is significantly worse than plain `str_replace` on indented `.py` / `.yml` | **Mixed** | 9/10 vs 9/10 overall; baseline uses far fewer tokens; not uniformly worse on pass rate |
+| **H1** | Docs describe `HASH\|content` (not line numbers) | Inconclusive | 9/10 — same as control |
+| **H2** | Fuzzy `str_replace` vs `edit_file` + `hashline_edit` | **Supported** | **10/10** — only perfect variant |
+| **H3** | `  \|` collision lines on read | **Rejected** | 7/10; highest cost |
+| **H4** | Hashline worse than plain `str_replace` on indented py/yaml | Mixed | 9/10 vs 9/10 on pass rate |
 
-**Bottom line:** Align user-facing docs with actual `HASH|content` format (low risk, modest gain). **Do not** adopt the empty-hash collision read format without further agent testing. Explore **fuzzy line-block replace** (H2) as a complement to hashline. Hashline is not universally inferior to `str_replace`, but collision handling and large YAML edits remain weak spots for the control stack.
+Align docs (low risk). **Do not** adopt empty-hash collision read format. **Consider porting fuzzy line matcher** ([`fuzzy_replace.py`](../src/harness/fuzzy_replace.py)). Hashline is not universally worse than `str_replace`, but large YAML and collisions remain weak for the control stack.
 
 ---
 
-## 3. Background: hashline in OpenCrabs
+## 4. Background: hashline in OpenCrabs
 
-### Read path
-
-With `read_file(..., hashline=true)`, each line is shown as:
-
-```text
-{2-char-content-hash}|{line text}
-```
-
-The hash is derived from the line bytes (FNV-1a style, 2-character alphabet)—not from a stable line number. The agent is expected to use these hashes when calling `hashline_edit`.
-
-### Edit path
-
-`hashline_edit` applies batch operations anchored by hash references (e.g. `VK` or `VK|line text`). If file content changed since read, stale hashes are rejected before edits apply.
-
-### Collisions
-
-When two or more lines share the same content hash, the control read formatter marks them as `COLLISION|{line}` and appends a warning that those lines cannot be edited via `hashline_edit` (use `edit_file` / search-replace instead).
-
-### Doc mismatch (motivates H1)
-
-Ported tool schemas and prompts historically described anchors like `LINE#ID` (line number + hash). That does not match `HASH|content` output. H1 tests whether correcting descriptions alone helps agents.
+- **`read_file(..., hashline=true)`** — each line is `{2-char-hash}|{line}` (content hash, not line number).
+- **`hashline_edit`** — edits anchored by hash; stale hashes rejected.
+- **Collisions** — duplicate line content → `COLLISION|{line}` in control read output + warning.
+- **H1 motivation** — docs still mention `LINE#ID`-style anchors in places; output is `HASH|content`.
 
 ```mermaid
 flowchart LR
   read[read_file hashline=true]
-  display["HASH|line per row"]
+  display["HASH|line"]
   edit[hashline_edit]
-  read --> display
-  display --> edit
+  read --> display --> edit
 ```
 
 ---
 
-## 4. Hypotheses H1–H4
+## 5. Hypotheses H1–H4
 
-Each variant changes **at most one** dimension vs `opencrabs_original` (control). Success = higher **pass rate** on targeted cases vs control (see §5).
+One isolated change per variant vs `opencrabs_original` (OpenCrabs control). **Pass** = exact file match to expected content ([§5](#5-methodology)).
 
-### H1 — Documentation vs implementation
-
-| Field | Description |
-|-------|-------------|
-| **Claim** | Docs that mention line numbers mislead agents; describing `HASH\|content` will improve results. |
-| **Change** | `opencrabs_h1_docs`: updated system prompt and tool docstrings only—**no code path change**. |
-| **Success criterion** | Pass rate increases vs control on indent- and collision-related cases. |
-| **Cases** | `whitespace_trap`, `whitespace_trap_py_large`, `indent_collision`, `indent_collision_large`, `add_docstring_large` |
-
-### H2 — Fuzzy line-block replace
+### H1 — Documentation
 
 | Field | Description |
 |-------|-------------|
-| **Claim** | Replacing `edit_file` + `hashline_edit` with a 4-stage fuzzy `str_replace` improves editing outcomes. |
-| **Change** | `opencrabs_h2_fuzzy`: keeps explore/read tools; uses `str_replace_fuzzy` (exact → trim end → trim both → Unicode normalize line matching). |
-| **Success criterion** | Pass rate ≥ control, especially on ambiguous and rename tasks. |
-| **Cases** | `ambiguous_replace`, `ambiguous_replace_large`, `rename_symbol_large`, `add_docstring_large` |
+| **Claim** | Fixing docs to `HASH\|content` improves success. |
+| **Change** | `opencrabs_h1_docs` — prompt + docstrings only. |
+| **Success** | Pass ↑ vs control on indent/collision cases. |
+| **Cases** | `whitespace_trap*`, `indent_collision*`, `add_docstring_large` |
 
-### H3 — Collision display format
+### H2 — Fuzzy replace
 
 | Field | Description |
 |-------|-------------|
-| **Claim** | `  \|{line}` (empty hash) on read is clearer than `COLLISION\|{line}` and improves results. |
-| **Change** | `opencrabs_h3_collision`: only `opencrabs_h3/read_file.py` sets `collision_format="empty_hash"`; edit validation unchanged. |
-| **Success criterion** | Pass rate increases vs control on `indent_collision*`. |
+| **Claim** | Fuzzy line-block `str_replace` beats hashline edit stack. |
+| **Change** | `opencrabs_h2_fuzzy` — [`str_replace_fuzzy`](../experiments/tooling/harness/str_replace_fuzzy.py) instead of `edit_file` / `hashline_edit`. |
+| **Success** | Pass ≥ control on ambiguous/rename/large cases. |
+| **Cases** | `ambiguous_replace*`, `rename_symbol_large`, `add_docstring_large` |
+
+### H3 — Collision display
+
+| Field | Description |
+|-------|-------------|
+| **Claim** | `  \|{line}` on read beats `COLLISION\|{line}`. |
+| **Change** | `opencrabs_h3_collision` — [H3 `read_file`](../experiments/tooling/opencrabs_h3/read_file.py) only. |
+| **Success** | Pass ↑ on `indent_collision*`. |
 | **Cases** | `indent_collision`, `indent_collision_large` |
-| **Isolation** | Separate `read_file` module so matrix loader does not leak collision format into other variants in-process. |
 
-### H4 — Indented Python and YAML
+### H4 — Indented py/yaml
 
 | Field | Description |
 |-------|-------------|
-| **Claim** | The full hashline tool stack is significantly worse than harness `str_replace` on indented `.py` and `.yml`. |
-| **Change** | None—compare all `opencrabs_*` variants to `baseline` (plain `str_replace` only). |
-| **Success criterion** | Lower pass rate for `opencrabs_*` than `baseline` on cases tagged `language:python` or `language:yaml` with `indented`. |
-| **Cases** | `whitespace_trap`, `whitespace_trap_yaml`, `whitespace_trap_py_large`, `whitespace_trap_yaml_large` |
+| **Claim** | Hashline stack worse than plain `str_replace` on indented `.py` / `.yml`. |
+| **Change** | Compare `opencrabs_*` to reference variant: **`str_replace` only** (harness tool set name `baseline` — `read_file` + exact `str_replace`, no hashline tools). |
+| **Success** | Lower pass for `opencrabs_*` on H4 trap cases (§6). |
+| **Cases** | `whitespace_trap`, `whitespace_trap_yaml`, `*_py_large`, `*_yaml_large` |
 
 ---
 
-## 5. Methodology
-
-### Harness flow
+## 6. Methodology
 
 ```mermaid
 flowchart LR
-  case[Case YAML]
-  sandbox[Sandbox file]
-  tools[Tool set YAML]
-  agent[LLM agent]
-  match[Exact file match]
-  case --> sandbox
-  tools --> agent
-  agent --> sandbox
-  sandbox --> match
+  case[Case YAML] --> sandbox[Sandbox file]
+  tools[Tool set] --> agent[LLM agent]
+  agent --> sandbox --> match[Exact file match]
 ```
-
-- **Case:** natural-language instruction, starting file, golden expected file content.
-- **Variant:** tool set + model preset.
-- **Pass/fail:** after the agent finishes, the workspace file must **match `expected_output` exactly** (byte-level). No partial-credit rubric.
-- **Matrix:** every variant × every case in the suite.
-
-### Suite
 
 | Parameter | Value |
 |-----------|--------|
-| Suite | `experiments/suites/hashline_hypotheses.yaml` |
-| Variants | 5 tool sets × 1 model (`minimax-m2.7`) |
-| Cases | 10 |
-| Runs | **50** |
+| Suite | [`hashline_hypotheses.yaml`](../experiments/suites/hashline_hypotheses.yaml) |
+| Runs | 5 variants × 10 cases = **50**; model `minimax-m2.7` |
 | Control | `opencrabs_original` |
-
-### Isolation
 
 | Variant | Single change |
 |---------|----------------|
-| `opencrabs_original` | Control (default OpenCrabs bundle) |
-| `opencrabs_h1_docs` | Prompt + docstrings |
-| `opencrabs_h2_fuzzy` | Fuzzy replace instead of `edit_file` / `hashline_edit` |
-| `opencrabs_h3_collision` | Empty-hash collision read format |
-| `baseline` | Harness `str_replace` only (H4 reference) |
+| OpenCrabs control | Default OpenCrabs bundle |
+| H1: docs fix | Prompt + docstrings |
+| H2: fuzzy replace | `str_replace_fuzzy` instead of `edit_file` / `hashline_edit` |
+| H3: empty-hash | Collision read format only |
+| `str_replace` only | H4 reference ([`baseline.yaml`](../experiments/tool_sets/baseline.yaml)) |
 
-No combined “best of” champion variant.
+**Metrics:** `passed` decides hypotheses; `turns`, `tokens_spent`, `tool_failures` are for comparison only. Earlier 4-case pilot is superseded; all numbers here are from the final 50-run JSON.
 
-### Metrics
+**Caveat:** Python port under [`experiments/tooling/opencrabs/`](../experiments/tooling/opencrabs/); re-validate in Rust before production.
 
-| Metric | Role |
-|--------|------|
-| `passed` | **Primary** — hypothesis accept/reject |
-| `turns` | Secondary — retry / cost proxy |
-| `tokens_spent` | Secondary — cost proxy |
-| `tool_failures` | Secondary — tool error rates |
-| Case `tags` | Subgroup analysis only (language, size) |
-
-### Python port caveat
-
-Tools under `experiments/tooling/opencrabs/` mirror OpenCrabs behavior (hash alphabet, read formatting, collision warnings). Conclusions inform **UX, docs, and protocol**; re-validate in Rust before shipping upstream.
-
-### Pilot
-
-An earlier 4-case pilot (20 runs) informed case expansion; **all numbers in this report are from the final 50-run matrix** only.
-
-### Threats to validity
-
-- Single model and provider.
-- Cases authored by eval designers, not OpenCrabs.
-- Pass criterion ignores nearly-correct edits.
-- No pre-registration with upstream.
-
----
-
-## 6. Test corpus
+### Test corpus
 
 | Case | Tags | Stresses |
 |------|------|----------|
-| `whitespace_trap` | python, indented | H1, H4 |
+| `whitespace_trap` | py, indented | H1, H4 |
 | `whitespace_trap_yaml` | yaml, indented | H4 |
-| `ambiguous_replace` | python | H2 |
-| `indent_collision` | python, indented, hash_collision | H1, H3 |
-| `whitespace_trap_py_large` | python, indented, size:large | H1, H4 |
-| `whitespace_trap_yaml_large` | yaml, indented, size:large | H4 |
-| `ambiguous_replace_large` | python, size:large | H2 |
-| `add_docstring_large` | python, size:large, problem:insert | H1, H2 |
-| `rename_symbol_large` | python, size:large, problem:rename | H2 |
-| `indent_collision_large` | python, indented, hash_collision, size:large | H1, H3 |
-
-Large cases are ~100–150 lines with edit targets away from the top of the file.
+| `ambiguous_replace` | py | H2 |
+| `indent_collision` | py, collision | H1, H3 |
+| `whitespace_trap_py_large` | py, large | H1, H4 |
+| `whitespace_trap_yaml_large` | yaml, large | H4 |
+| `ambiguous_replace_large` | py, large | H2 |
+| `add_docstring_large` | py, large | H1, H2 |
+| `rename_symbol_large` | py, large | H2 |
+| `indent_collision_large` | py, large, collision | H1, H3 |
 
 ---
 
@@ -228,78 +157,37 @@ Large cases are ~100–150 lines with edit targets away from the top of the file
 
 ![Pass matrix](figures/pass_matrix_heatmap.png)
 
-*Green = pass, red = fail. Control failed only `whitespace_trap_yaml_large`; H3 failed `whitespace_trap`, `indent_collision`, and `rename_symbol_large`.*
+Failures vs control: **OpenCrabs control** — `whitespace_trap_yaml_large`; **H3** — `whitespace_trap`, `indent_collision`, `rename_symbol_large`; **H1** — `rename_symbol_large`; **`str_replace` only** — `rename_symbol_large`.
 
-![Efficiency: turns and tokens](figures/efficiency_tokens_turns.png)
+![Efficiency](figures/efficiency_tokens_turns.png)
 
-![Pass rate by language and file size](figures/h4_and_size_buckets.png)
+![H4 cases and file size](figures/h4_cases_and_file_size.png)
 
-[Interactive notebook with summary table](hashline_hypothesis_report.ipynb)
+*Left: pass rate on the four H4 trap cases only. Right: all cases split by `size:large` (6 large, 4 small).*
 
-### Pass matrix
+[Notebook](hashline_hypothesis_report.ipynb)
 
-| Case | control | H1 | H3 | H2 | baseline |
-|------|---------|----|----|-----|----------|
-| `whitespace_trap` | ✓ | ✓ | ✗ | ✓ | ✓ |
-| `whitespace_trap_yaml` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `ambiguous_replace` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `indent_collision` | ✓ | ✓ | ✗ | ✓ | ✓ |
-| `whitespace_trap_py_large` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `whitespace_trap_yaml_large` | ✗ | ✓ | ✓ | ✓ | ✓ |
-| `ambiguous_replace_large` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `add_docstring_large` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `rename_symbol_large` | ✓ | ✗ | ✗ | ✓ | ✗ |
-| `indent_collision_large` | ✓ | ✓ | ✓ | ✓ | ✓ |
-
-### Efficiency (means per variant)
+### Efficiency (means)
 
 | Variant | Pass | Avg turns | Avg tokens |
 |---------|------|-----------|------------|
-| `opencrabs_original` | 9/10 | 5.3 | 30,696 |
-| `opencrabs_h1_docs` | 9/10 | 5.9 | 27,384 |
-| `opencrabs_h2_fuzzy` | **10/10** | 5.3 | 20,115 |
-| `opencrabs_h3_collision` | 7/10 | **9.0** | **46,785** |
-| `baseline` | 9/10 | 4.9 | **8,412** |
+| OpenCrabs control | 9/10 | 5.3 | 30,696 |
+| H1: docs fix | 9/10 | 5.9 | 27,384 |
+| H2: fuzzy replace | **10/10** | 5.3 | 20,115 |
+| H3: empty-hash | 7/10 | **9.0** | **46,785** |
+| str_replace only | 9/10 | 4.9 | **8,412** |
 
 ---
 
 ## 8. Interpretation
 
-### H1 — Documentation
+**H1 — Docs:** Inconclusive (9/10). Doc clarity may help large YAML (+`whitespace_trap_yaml_large`) but is not sufficient alone (−`rename_symbol_large`). See [§10](#10-recommendations-limitations-and-reproducibility) for doc alignment.
 
-**Result:** Inconclusive.
+**H2 — Fuzzy replace:** Supported (10/10). Only variant with a perfect score; best on large files. **For implementation, start with** [`fuzzy_replace.py`](../src/harness/fuzzy_replace.py) and the [Codex reference](https://github.com/openai/codex/blob/main/codex-rs/apply-patch/src/seek_sequence.rs).
 
-**Evidence:** 9/10 pass—tied with control. Versus control: **+** `whitespace_trap_yaml_large`, **−** `rename_symbol_large`.
+**H3 — Empty-hash collisions:** Rejected (7/10). Regressed core small-file cases; 27 turns on `indent_collision`. Do not default to `  |` on read.
 
-**Failure mode:** On `rename_symbol_large`, the agent used `edit_file` repeatedly with `edit_file_succeeded` but left incorrect content—incomplete rename, not a hashline-specific bug.
-
-**Upstream action:** Still align Rust/schemas/prompts to `HASH|content` and deprecate `LINE#ID` in user-facing text (keep parser backward-compatible). Expect modest impact; pair with tool-routing guidance.
-
-### H2 — Fuzzy replace
-
-**Result:** Supported.
-
-**Evidence:** 10/10 pass; 6/6 on `size:large` cases; only variant to fix control’s `whitespace_trap_yaml_large` failure; lowest mean tokens among OpenCrabs-family variants.
-
-**Upstream action:** Evaluate Codex-style fuzzy line-block matching as a complement or alternative for whitespace-sensitive and ambiguous replacements.
-
-### H3 — Empty-hash collisions
-
-**Result:** Rejected.
-
-**Evidence:** 7/10 pass; **2/4** on small cases. Regressions vs control on `whitespace_trap` and `indent_collision`. Mean 9.0 turns and 46.8k tokens vs 5.3 and 30.7k for control.
-
-**Failure mode:** Thrashing between `hashline_edit` and `edit_file` (e.g. 27 turns on `indent_collision`; `hashline_edit_failures` on several runs). “Quieter” collision display did not help agents.
-
-**Upstream action:** Do **not** default to `  |` without parser and prompt changes. Prefer explicit `COLLISION|` or forbid `hashline_edit` on collision lines in instructions.
-
-### H4 — vs baseline `str_replace`
-
-**Result:** Mixed.
-
-**Evidence:** Overall 9/10 for both control and baseline. Baseline uses far fewer tokens but fails the same `rename_symbol_large` case. Python-tagged: control 8/8, baseline 7/8. Only control failed large YAML.
-
-**Upstream action:** Hashline is not uniformly worse on indented py/yaml in this model. Recommend scoped guidance: large structured YAML and collision lines → `edit_file` or fuzzy replace, not hashline_edit.
+**H4 — vs `str_replace` only:** Mixed. Same 9/10 pass as control; reference variant uses far fewer tokens but fails the same rename case. Hashline is not uniformly worse on indented traps; weakness is collisions and large YAML on the control stack.
 
 ---
 
@@ -307,45 +195,40 @@ Large cases are ~100–150 lines with edit targets away from the top of the file
 
 | Priority | Action |
 |----------|--------|
-| **High** | Align `read_file` / `hashline_edit` docs to `HASH\|content`; stop advertising line-number IDs in user-facing text |
-| **High** | Do not ship empty-hash collision read format (`  \|`) without agent retesting |
-| **Medium** | Explore fuzzy line-block replace (H2 winner) alongside hashline |
-| **Medium** | Keep explicit collision markers or block `hashline_edit` on collision lines |
-| **Low** | Replicate in Rust and additional models before production decisions |
-
-**Not recommended:** Removing hashline entirely based on this eval (control still 9/10); claiming documentation fixes alone solve hashline UX.
+| **High** | Align docs to `HASH\|content`; deprecate line-number ID wording |
+| **High** | Do not ship `  \|` collision read format without retesting |
+| **Medium** | Explore fuzzy line-block replace (H2) |
+| **Medium** | Keep explicit `COLLISION\|` or block `hashline_edit` on collision lines |
+| **Low** | Replicate in Rust + more models |
 
 ---
 
-## 10. Limitations, reproducibility, artifacts
+## 10. Limitations and reproducibility
 
-### Limitations
-
-- Single LLM (`minimax-m2.7`).
-- Python port may diverge from Rust.
-- Eval-authored cases; results may not generalize to production workloads.
-
-### Reproduce
+**Limitations:** single model; Python port ≠ Rust; eval-authored cases; exact-match pass criterion only; no upstream pre-registration.
 
 ```bash
-cd harness_test
-python -m venv .venv && source .venv/bin/activate
 pip install -e ".[report]"
-
-# Re-run eval (requires MINIMAX_API_KEY in .env)
 python -m harness.matrix run --suite experiments/suites/hashline_hypotheses.yaml
-
-# Regenerate charts and notebook outputs
 python docs/_build_report_viz.py
 jupyter nbconvert --execute --to notebook docs/hashline_hypothesis_report.ipynb
 ```
 
-### Artifacts
+**Artifacts:** [matrix JSON](../reports/2026-05-23T13-22-35.666225+00-00_local-r_matrix.json) · [notebook](hashline_hypothesis_report.ipynb) · [`CLAUDE.md`](../CLAUDE.md)
 
-| File | Description |
-|------|-------------|
-| [`reports/2026-05-23T13-22-35.666225+00-00_local-r_matrix.json`](../reports/2026-05-23T13-22-35.666225+00-00_local-r_matrix.json) | Canonical 50-run output |
-| [hashline_hypothesis_report.ipynb](hashline_hypothesis_report.ipynb) | Charts and summary table |
-| `docs/figures/*.png` | Static figures embedded above |
+---
 
-Suite definition: `experiments/suites/hashline_hypotheses.yaml`. Harness overview: [`CLAUDE.md`](../CLAUDE.md).
+## Appendix: Implementation map (harness_test)
+
+| Component | Path |
+|-----------|------|
+| Hashline read/format | [`experiments/tooling/opencrabs/hashline.py`](../experiments/tooling/opencrabs/hashline.py) |
+| hashline_edit | [`experiments/tooling/opencrabs/hashline_edit.py`](../experiments/tooling/opencrabs/hashline_edit.py) |
+| read_file | [`experiments/tooling/opencrabs/read_file.py`](../experiments/tooling/opencrabs/read_file.py) |
+| Fuzzy matcher (H2) | [`src/harness/fuzzy_replace.py`](../src/harness/fuzzy_replace.py) |
+| str_replace_fuzzy | [`src/harness/tools.py`](../src/harness/tools.py), [`experiments/tooling/harness/str_replace_fuzzy.py`](../experiments/tooling/harness/str_replace_fuzzy.py) |
+| Tool sets | [`experiments/tool_sets/opencrabs_*.yaml`](../experiments/tool_sets/) |
+| Cases | [`experiments/cases/`](../experiments/cases/) |
+| Suite | [`experiments/suites/hashline_hypotheses.yaml`](../experiments/suites/hashline_hypotheses.yaml) |
+
+**Rust upstream:** collision/read formatting ≈ `read.rs`; hash alphabet ≈ `hash.rs`. Fuzzy replace was evaluated only in harness Python; use [`fuzzy_replace.py`](../src/harness/fuzzy_replace.py) as the reference port target.
