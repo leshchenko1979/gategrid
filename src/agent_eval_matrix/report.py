@@ -4,8 +4,8 @@ import json
 import logging
 from pathlib import Path
 
-from harness.models import MatrixReport
-from harness.observability import REPORTS_DIR, now_iso
+from agent_eval_matrix.models import MatrixReport
+from agent_eval_matrix.observability import REPORTS_DIR, now_iso
 
 logger = logging.getLogger(__name__)
 

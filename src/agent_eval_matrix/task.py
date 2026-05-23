@@ -6,15 +6,15 @@ from pathlib import Path
 from pydantic_ai.usage import RunUsage
 from pydantic_evals import Case, Dataset
 
-from harness.agent import build_agent
-from harness.evaluators import (
+from agent_eval_matrix.agent import build_agent
+from agent_eval_matrix.evaluators import (
     EfficiencyEvaluator,
     FileContentMatch,
     ToolUsageEvaluator,
 )
-from harness.models import CaseResult, EditCase, ExperimentVariant, FileEditDeps
-from harness.observability import append_trace_event, span_context
-from harness.run_metrics import tokens_spent, tool_failures, turns
+from agent_eval_matrix.models import CaseResult, EditCase, ExperimentVariant, FileEditDeps
+from agent_eval_matrix.observability import append_trace_event, span_context
+from agent_eval_matrix.run_metrics import tokens_spent, tool_failures, turns
 
 
 async def run_agent_on_case(

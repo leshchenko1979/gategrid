@@ -8,7 +8,7 @@ from typing import Literal
 from pydantic_ai import RunContext
 from pydantic_evals import increment_eval_metric
 
-from harness.models import FileEditDeps
+from agent_eval_matrix.models import FileEditDeps
 
 from opencrabs._common import bump_tool, resolve
 from opencrabs.hashline import format_read_hashline

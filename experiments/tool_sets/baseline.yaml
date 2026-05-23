@@ -9,8 +9,8 @@ system_prompt: |
   - str_replace requires an exact match of old_str, including whitespace and indentation.
   - Only modify files inside the workspace.
 tools:
-  - tooling/harness/ls.py
-  - tooling/harness/glob_tool.py
-  - tooling/harness/grep.py
-  - tooling/harness/read_file.py
-  - tooling/harness/str_replace.py
+  - tooling/reference/ls.py
+  - tooling/reference/glob_tool.py
+  - tooling/reference/grep.py
+  - tooling/reference/read_file.py
+  - tooling/reference/str_replace.py

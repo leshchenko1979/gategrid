@@ -3,9 +3,9 @@ from __future__ import annotations
 from pydantic_ai import RunContext
 from pydantic_evals import increment_eval_metric, set_eval_attribute
 
-from harness.fuzzy_replace import fuzzy_replace_once
-from harness.models import FileEditDeps
-from harness.sandbox import (
+from agent_eval_matrix.fuzzy_replace import fuzzy_replace_once
+from agent_eval_matrix.models import FileEditDeps
+from agent_eval_matrix.sandbox import (
     SandboxError,
     canonical_path,
     relative_workspace_path,

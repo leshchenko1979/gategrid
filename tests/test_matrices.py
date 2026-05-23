@@ -3,9 +3,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from harness.config import resolve_base_url, resolve_model_name
-from harness.matrices import build_model_registry, resolve_matrix
-from harness.models import MatrixConfig, ModelPreset
+from agent_eval_matrix.config import resolve_base_url, resolve_model_name
+from agent_eval_matrix.matrices import build_model_registry, resolve_matrix
+from agent_eval_matrix.models import MatrixConfig, ModelPreset
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPERIMENTS = ROOT / "experiments"

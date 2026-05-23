@@ -1,6 +1,6 @@
 from pydantic_ai.usage import RunUsage
 
-from harness.run_metrics import tokens_spent, tool_failures, turns
+from agent_eval_matrix.run_metrics import tokens_spent, tool_failures, turns
 
 
 def test_tokens_spent() -> None:

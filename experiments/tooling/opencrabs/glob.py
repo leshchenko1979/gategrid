@@ -6,8 +6,8 @@ from pathlib import Path
 
 from pydantic_ai import RunContext
 
-from harness.models import FileEditDeps
-from harness.sandbox import canonical_path
+from agent_eval_matrix.models import FileEditDeps
+from agent_eval_matrix.sandbox import canonical_path
 
 from opencrabs._common import bump_tool, resolve
 

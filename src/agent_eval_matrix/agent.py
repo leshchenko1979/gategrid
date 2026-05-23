@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pydantic_ai import Agent
 
-from harness.config import get_model
-from harness.models import ExperimentVariant, FileEditDeps
+from agent_eval_matrix.config import get_model
+from agent_eval_matrix.models import ExperimentVariant, FileEditDeps
 
 
 def build_agent(variant: ExperimentVariant) -> Agent[FileEditDeps]:

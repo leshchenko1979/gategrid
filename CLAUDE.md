@@ -1,4 +1,4 @@
-# harness_test — LLM agent eval harness
+# agent-eval-matrix — LLM agent eval harness
 
 **User-facing pitch and quick start:** [README.md](README.md) (framework-first; bundled `experiments/` content is examples only).
 
@@ -14,10 +14,10 @@ Matrix evals over **cases** (YAML) × **tool sets** (YAML) × **models** (YAML).
 uv sync --extra dev
 # .env: MINIMAX_API_KEY
 
-uv run python -m harness.matrix run
-uv run python -m harness.matrix run --matrix experiments/matrices/ci.yaml
-uv run python -m harness.evals run --case add_docstring --tool-set baseline
-uv run python -m harness.matrix run --variant strict/verbose/minimax-m2.7
+uv run python -m agent_eval_matrix.matrix run
+uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/ci.yaml
+uv run python -m agent_eval_matrix.evals run --case add_docstring --tool-set baseline
+uv run python -m agent_eval_matrix.matrix run --variant strict/verbose/minimax-m2.7
 ```
 
 After `source .venv/bin/activate`, omit the `uv run` prefix.
@@ -29,20 +29,20 @@ After `source .venv/bin/activate`, omit the `uv run` prefix.
 - `experiments/models/` — model presets (`provider`, `model_name`, `api_key_env`, …)
 - `experiments/matrices/` — runnable matrix definitions (`tool_sets`, `models`, `cases`/`case_sets`)
 - `experiments/cases/` — case content (one YAML per case)
-- `experiments/tooling/harness/` — thin wrappers over `harness.tools` (one tool per file)
+- `experiments/tooling/reference/` — thin wrappers over `agent_eval_matrix.tools` (one tool per file)
 - `experiments/tooling/opencrabs/` — OpenCrabs-style tools (one tool per file)
-- `src/harness/` — loader, sandbox, matrices resolver, matrix CLI
+- `src/agent_eval_matrix/` — loader, sandbox, matrices resolver, matrix CLI
 
 ## Tooling rules
 
 - **No** `SYSTEM_PROMPT`, `TOOLS`, or `register(agent)` bundles in `.py` files.
-- **Harness tools**: `tooling/harness/*.py` → `harness.tools`.
+- **Reference tools**: `tooling/reference/*.py` → `agent_eval_matrix.tools`.
 - **OpenCrabs tools**: `tooling/opencrabs/*.py`; composed via `tool_sets/opencrabs_original.yaml`.
 
 ## Paths
 
 - Models should use **workspace-relative** paths (`app.py`).
-- `harness.sandbox` canonicalizes macOS `/private/var` vs `/var` and accepts absolutes inside the workspace.
+- `agent_eval_matrix.sandbox` canonicalizes macOS `/private/var` vs `/var` and accepts absolutes inside the workspace.
 
 ## Models
 
@@ -56,7 +56,7 @@ After `source .venv/bin/activate`, omit the `uv run` prefix.
 Isolated OpenCrabs variants (H1 doc fix, H2 fuzzy `str_replace`, H3 empty-hash collisions) vs `opencrabs_original` and `baseline`:
 
 ```bash
-uv run python -m harness.matrix run --matrix experiments/matrices/hashline_hypotheses.yaml
+uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/hashline_hypotheses.yaml
 ```
 
 **10 cases** (4 small + 6 large ~100–150 lines): indent traps, ambiguous replace, hash collisions, docstring insert, rename — **50 matrix runs** (5 variants × 10 cases).
@@ -69,7 +69,7 @@ Pass/fail is still **file content match** only; `print_summary` adds hypothesis 
 
 - **turns** — `RunUsage.requests` from `agent.run()` (LLM rounds, not `tool_calls`)
 - **tokens_spent** — sum of canonical `RunUsage` token fields + `details` (not `total_tokens`)
-- **tool_failures** — sum of `metrics` keys ending in `_failures` from harness tools
+- **tool_failures** — sum of `metrics` keys ending in `_failures` from reference tools
 - **duration_ms** — pydantic-evals `task_duration` on the report row
 - Raw span/tool counters remain in `CaseResult.metrics` for debugging
 

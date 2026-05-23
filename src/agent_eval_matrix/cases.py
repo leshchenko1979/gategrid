@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from harness.models import EditCase
+from agent_eval_matrix.models import EditCase
 
 
 def load_cases_by_names(cases_path: Path, names: list[str]) -> list[EditCase]:

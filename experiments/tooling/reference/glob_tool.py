@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pydantic_ai import RunContext
 
-from harness import tools
-from harness.models import FileEditDeps
+from agent_eval_matrix import tools
+from agent_eval_matrix.models import FileEditDeps
 
 
 def glob_tool(ctx: RunContext[FileEditDeps], pattern: str) -> list[str]:

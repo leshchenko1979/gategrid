@@ -2,21 +2,21 @@ from pathlib import Path
 
 import pytest
 
-from harness.load_tooling import load_tool_function, resolve_experiments_path
-from harness.matrices import build_tool_set_registry, load_tool_set
+from agent_eval_matrix.load_tooling import load_tool_function, resolve_experiments_path
+from agent_eval_matrix.matrices import build_tool_set_registry, load_tool_set
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPERIMENTS = ROOT / "experiments"
 
 
 def test_resolve_experiments_path() -> None:
-    path = resolve_experiments_path("tooling/harness/ls.py", EXPERIMENTS)
+    path = resolve_experiments_path("tooling/reference/ls.py", EXPERIMENTS)
     assert path.name == "ls.py"
     assert path.is_file()
 
 
-def test_load_harness_ls_tool() -> None:
-    path = resolve_experiments_path("tooling/harness/ls.py", EXPERIMENTS)
+def test_load_reference_ls_tool() -> None:
+    path = resolve_experiments_path("tooling/reference/ls.py", EXPERIMENTS)
     fn = load_tool_function(path)
     assert callable(fn)
     assert fn.__name__ == "ls"

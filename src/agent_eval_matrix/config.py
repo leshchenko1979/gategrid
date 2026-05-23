@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pydantic_ai.models import Model
 
-from harness.models import ModelPreset
+from agent_eval_matrix.models import ModelPreset
 
 ROOT = Path(__file__).resolve().parents[2]
 EXPERIMENTS = ROOT / "experiments"
@@ -22,7 +22,7 @@ def _env_prefix(api_key_env: str) -> str:
 def _get_model_registry() -> dict[str, ModelPreset]:
     global _model_registry
     if _model_registry is None:
-        from harness.matrices import build_model_registry
+        from agent_eval_matrix.matrices import build_model_registry
 
         _model_registry = build_model_registry(EXPERIMENTS)
     return _model_registry

@@ -28,7 +28,7 @@ def _ensure_tooling_import_paths(tool_path: Path) -> None:
 
 
 def _module_import_name(path: Path) -> str:
-    return "harness_tool_" + "_".join(path.with_suffix("").parts[-3:])
+    return "agent_eval_matrix_tool_" + "_".join(path.with_suffix("").parts[-3:])
 
 
 def load_tool_function(path: Path) -> Callable:

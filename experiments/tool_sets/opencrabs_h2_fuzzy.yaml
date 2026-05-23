@@ -13,4 +13,4 @@ tools:
   - tooling/opencrabs/ls.py
   - tooling/opencrabs/glob.py
   - tooling/opencrabs/grep.py
-  - tooling/harness/str_replace_fuzzy.py
+  - tooling/reference/str_replace_fuzzy.py

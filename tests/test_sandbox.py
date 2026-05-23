@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from harness.sandbox import (
+from agent_eval_matrix.sandbox import (
     SandboxError,
     canonical_path,
     relative_workspace_path,

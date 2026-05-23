@@ -6,15 +6,15 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from harness.cases import load_cases
-from harness.observability import get_commit_sha, setup_observability
-from harness.report import new_matrix_report, print_summary, write_aggregate_report
-from harness.matrices import (
+from agent_eval_matrix.cases import load_cases
+from agent_eval_matrix.observability import get_commit_sha, setup_observability
+from agent_eval_matrix.report import new_matrix_report, print_summary, write_aggregate_report
+from agent_eval_matrix.matrices import (
     build_model_registry,
     build_tool_set_registry,
     variant_from_tool_set,
 )
-from harness.task import evaluate_case
+from agent_eval_matrix.task import evaluate_case
 
 ROOT = Path(__file__).resolve().parents[2]
 EXPERIMENTS = ROOT / "experiments"

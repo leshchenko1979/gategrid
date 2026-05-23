@@ -5,9 +5,9 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel
 
-from harness.cases import load_cases_by_names
-from harness.load_tooling import load_tool_functions
-from harness.models import (
+from agent_eval_matrix.cases import load_cases_by_names
+from agent_eval_matrix.load_tooling import load_tool_functions
+from agent_eval_matrix.models import (
     CaseSet,
     EditCase,
     ExperimentVariant,

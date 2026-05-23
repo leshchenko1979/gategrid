@@ -8,5 +8,5 @@ system_prompt: |
   - str_replace replaces exactly one literal occurrence.
   - Only modify files inside the workspace.
 tools:
-  - tooling/harness/read_file.py
-  - tooling/harness/str_replace.py
+  - tooling/reference/read_file.py
+  - tooling/reference/str_replace.py

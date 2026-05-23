@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic_ai import RunContext
 
-from harness.models import FileEditDeps
+from agent_eval_matrix.models import FileEditDeps
 
 from opencrabs.read_file import _read
 

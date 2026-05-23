@@ -8,11 +8,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from harness.models import ExperimentVariant
-from harness.observability import get_commit_sha, setup_observability
-from harness.report import new_matrix_report, print_summary, write_aggregate_report
-from harness.matrices import resolve_matrix
-from harness.task import evaluate_case
+from agent_eval_matrix.models import ExperimentVariant
+from agent_eval_matrix.observability import get_commit_sha, setup_observability
+from agent_eval_matrix.report import new_matrix_report, print_summary, write_aggregate_report
+from agent_eval_matrix.matrices import resolve_matrix
+from agent_eval_matrix.task import evaluate_case
 
 logger = logging.getLogger(__name__)
 

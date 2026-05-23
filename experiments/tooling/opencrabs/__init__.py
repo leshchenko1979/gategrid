@@ -1,1 +1,1 @@
-"""OpenCrabs-style file tools for harness evals."""
+"""OpenCrabs-style file tools for agent eval matrix."""

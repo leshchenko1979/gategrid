@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 from pydantic_ai import RunContext
 from pydantic_evals import increment_eval_metric, set_eval_attribute
 
-from harness.models import FileEditDeps
-from harness.sandbox import relative_workspace_path
+from agent_eval_matrix.models import FileEditDeps
+from agent_eval_matrix.sandbox import relative_workspace_path
 
 from opencrabs._common import build_edit_diff, bump_tool, resolve
 

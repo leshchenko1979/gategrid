@@ -1,8 +1,8 @@
-"""Tests for harness fuzzy_replace (Codex seek_sequence-style)."""
+"""Tests for agent_eval_matrix fuzzy_replace (Codex seek_sequence-style)."""
 
 from __future__ import annotations
 
-from harness.fuzzy_replace import fuzzy_replace_once, seek_sequence
+from agent_eval_matrix.fuzzy_replace import fuzzy_replace_once, seek_sequence
 
 
 def test_seek_sequence_exact() -> None:

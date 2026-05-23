@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from harness.evaluators import FileContentMatch, _normalize
+from agent_eval_matrix.evaluators import FileContentMatch, _normalize
 
 
 def test_normalize() -> None:

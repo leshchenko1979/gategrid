@@ -1,6 +1,6 @@
 # OpenCrabs file-editing evaluation — hashline and edit-tool design
 
-External evaluation of OpenCrabs-style tooling via a Python port in the `harness_test` repository.
+External evaluation of OpenCrabs-style tooling via a Python port in the `agent-eval-matrix` repository.
 
 The matrix tests **four design questions**: hashline read/edit protocol (H1–H3), whether **two edit tools** (`edit_file` + `hashline_edit`) should become **one** fuzzy `str_replace` (H2), and how the **original OpenCrabs toolset** compares to a **simplified reference** tool set (H4).
 
@@ -26,7 +26,7 @@ Researchers integrated OpenCrabs tools into this evaluation codebase to test bel
 
 | If you are…                      | Verdict                                                 | Python port — files to inspect |
 | -------------------------------- | ------------------------------------------------------- | ------------------------------ |
-| **Fuzzy line replace (H2)**      | **Supported** — see [§8](#8-interpretation)             | [fuzzy_replace.py](../src/harness/fuzzy_replace.py); [str_replace_fuzzy.py](../experiments/tooling/harness/str_replace_fuzzy.py); [opencrabs_h2_fuzzy.yaml](../experiments/tool_sets/opencrabs_h2_fuzzy.yaml) |
+| **Fuzzy line replace (H2)**      | **Supported** — see [§8](#8-interpretation)             | [fuzzy_replace.py](../src/agent_eval_matrix/fuzzy_replace.py); [str_replace_fuzzy.py](../experiments/tooling/reference/str_replace_fuzzy.py); [opencrabs_h2_fuzzy.yaml](../experiments/tool_sets/opencrabs_h2_fuzzy.yaml) |
 | **Hashline docs (H1)**           | Inconclusive — still align docs                         | [opencrabs_h1_docs.yaml](../experiments/tool_sets/opencrabs_h1_docs.yaml); [read_file.py](../experiments/tooling/opencrabs/read_file.py), [hashline_edit.py](../experiments/tooling/opencrabs/hashline_edit.py), [hashline.py](../experiments/tooling/opencrabs/hashline.py) |
 | **Collision read format (H3)**   | **Rejected** — do not ship empty-hash display on read   | [opencrabs_h3_collision.yaml](../experiments/tool_sets/opencrabs_h3_collision.yaml); [hashline.py](../experiments/tooling/opencrabs/hashline.py), [H3 read_file](../experiments/tooling/opencrabs_h3/read_file.py) |
 | **vs simplified reference (H4)** | Mixed — see [§5 tool surface](#tool-surface-complexity) | [baseline.yaml](../experiments/tool_sets/baseline.yaml) vs [opencrabs_original.yaml](../experiments/tool_sets/opencrabs_original.yaml) |
@@ -147,13 +147,13 @@ The reference tool set has **~4×** fewer total parameters than the original bun
 
 | Tool                  | Params                        | Implementation |
 | --------------------- | ----------------------------- | -------------- |
-| `read_file`           | 4 (OpenCrabs) / 1 (reference) | [opencrabs/read_file.py](../experiments/tooling/opencrabs/read_file.py) · [harness/read_file.py](../experiments/tooling/harness/read_file.py) |
-| `ls`                  | 4 / 1                         | [opencrabs/ls.py](../experiments/tooling/opencrabs/ls.py) · [harness/ls.py](../experiments/tooling/harness/ls.py) |
-| `glob`                | 4 / 1                         | [opencrabs/glob.py](../experiments/tooling/opencrabs/glob.py) · [harness/glob_tool.py](../experiments/tooling/harness/glob_tool.py) |
-| `grep`                | 8 / 2                         | [opencrabs/grep.py](../experiments/tooling/opencrabs/grep.py) · [harness/grep.py](../experiments/tooling/harness/grep.py) |
+| `read_file`           | 4 (OpenCrabs) / 1 (reference) | [opencrabs/read_file.py](../experiments/tooling/opencrabs/read_file.py) · [reference/read_file.py](../experiments/tooling/reference/read_file.py) |
+| `ls`                  | 4 / 1                         | [opencrabs/ls.py](../experiments/tooling/opencrabs/ls.py) · [reference/ls.py](../experiments/tooling/reference/ls.py) |
+| `glob`                | 4 / 1                         | [opencrabs/glob.py](../experiments/tooling/opencrabs/glob.py) · [reference/glob_tool.py](../experiments/tooling/reference/glob_tool.py) |
+| `grep`                | 8 / 2                         | [opencrabs/grep.py](../experiments/tooling/opencrabs/grep.py) · [reference/grep.py](../experiments/tooling/reference/grep.py) |
 | `edit_file`           | 10                            | [edit_file.py](../experiments/tooling/opencrabs/edit_file.py) |
 | `hashline_edit`       | 2 (+ 4 per edit item)         | [hashline_edit.py](../experiments/tooling/opencrabs/hashline_edit.py) |
-| `str_replace` / fuzzy | 3                             | [str_replace.py](../experiments/tooling/harness/str_replace.py) · [str_replace_fuzzy.py](../experiments/tooling/harness/str_replace_fuzzy.py) |
+| `str_replace` / fuzzy | 3                             | [str_replace.py](../experiments/tooling/reference/str_replace.py) · [str_replace_fuzzy.py](../experiments/tooling/reference/str_replace_fuzzy.py) |
 
 H3 read override: [opencrabs_h3/read_file.py](../experiments/tooling/opencrabs_h3/read_file.py).
 
@@ -224,7 +224,7 @@ One isolated change per variant vs the **original OpenCrabs toolset**. Pass crit
 
 **H1 — Docs:** Inconclusive. Doc clarity may help large YAML ([whitespace_trap_yaml_large](../experiments/cases/whitespace_trap_yaml_large.yaml)) but did not fix [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml) under H1. See [§9](#9-recommendations-for-upstream).
 
-**H2 — Fuzzy replace:** Supported — only variant with a clean sweep; see [§3](#3-executive-summary) and [§7](#7-results). Starting points: [fuzzy_replace.py](../src/harness/fuzzy_replace.py), [Codex seek_sequence](https://github.com/openai/codex/blob/main/codex-rs/apply-patch/src/seek_sequence.rs).
+**H2 — Fuzzy replace:** Supported — only variant with a clean sweep; see [§3](#3-executive-summary) and [§7](#7-results). Starting points: [fuzzy_replace.py](../src/agent_eval_matrix/fuzzy_replace.py), [Codex seek_sequence](https://github.com/openai/codex/blob/main/codex-rs/apply-patch/src/seek_sequence.rs).
 
 **H3 — Empty-hash collision display:** Rejected — regressed [whitespace_trap](../experiments/cases/whitespace_trap.yaml) and [indent_collision](../experiments/cases/indent_collision.yaml) (27 turns on the latter). Worst efficiency in [§7](#7-results). Do not default to empty-hash collision display on read.
 
@@ -250,8 +250,8 @@ One isolated change per variant vs the **original OpenCrabs toolset**. Pass crit
 
 ```bash
 uv sync --extra report
-# matrix runner CLI (harness_test package)
-uv run python -m harness.matrix run --matrix experiments/matrices/hashline_hypotheses.yaml
+# matrix runner CLI (agent-eval-matrix package)
+uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/hashline_hypotheses.yaml
 uv run python docs/_build_report_viz.py
 jupyter nbconvert --execute --to notebook docs/hashline_hypothesis_report.ipynb
 ```
@@ -269,6 +269,6 @@ Compact path index; tool-parameter detail: [§5 tool surface](#tool-surface-comp
 | Tool sets | [opencrabs_original.yaml](../experiments/tool_sets/opencrabs_original.yaml), [opencrabs_h1_docs.yaml](../experiments/tool_sets/opencrabs_h1_docs.yaml), [opencrabs_h2_fuzzy.yaml](../experiments/tool_sets/opencrabs_h2_fuzzy.yaml), [opencrabs_h3_collision.yaml](../experiments/tool_sets/opencrabs_h3_collision.yaml), [baseline.yaml](../experiments/tool_sets/baseline.yaml) |
 | Matrix / cases | [hashline_hypotheses.yaml](../experiments/matrices/hashline_hypotheses.yaml), [experiments/cases/](../experiments/cases/) |
 | Hashline core | [hashline.py](../experiments/tooling/opencrabs/hashline.py) |
-| Fuzzy matcher (H2) | [fuzzy_replace.py](../src/harness/fuzzy_replace.py) |
+| Fuzzy matcher (H2) | [fuzzy_replace.py](../src/agent_eval_matrix/fuzzy_replace.py) |
 
 **Rust upstream:** collision/read formatting ≈ `read.rs`; hash alphabet ≈ `hash.rs`. Fuzzy replace was evaluated only in this repo’s Python port.
