@@ -64,7 +64,7 @@ def test_resolve_demo_mode_all_mock() -> None:
 def test_resolve_demo_mode_real_models() -> None:
     assert not resolve_demo_mode(
         cli_demo_flag=False,
-        matrix_name="ci",
+        matrix_name="smoke",
         model_ids=["minimax-m2.7"],
     )
 

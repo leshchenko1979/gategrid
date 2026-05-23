@@ -52,7 +52,7 @@ Commands use placeholders below; bundled names under [experiments/](experiments/
 | -------------------------- | ----------------------------------------------------------------------------------------- |
 | Demo (no API key)          | `uv run python -m agent_eval_matrix.matrix run --demo`                                    |
 | Default run (demo matrix)  | `uv run python -m agent_eval_matrix.matrix run`                                           |
-| CI smoke (2 cells)         | `uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/ci.yaml`   |
+| Smoke (2 cells)            | `uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/smoke.yaml` |
 | Full benchmark (20 cells)  | `uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/full.yaml` |
 | Custom matrix              | `uv run python -m agent_eval_matrix.matrix run --matrix path/to/matrix.yaml`            |
 | One variant                | `uv run python -m agent_eval_matrix.matrix run --variant <tool-set>/<model-preset>`     |
@@ -242,7 +242,7 @@ case_sets:
 # or: cases: [my_case]
 ```
 
-Default run target when `--matrix` is omitted: [experiments/matrices/demo.yaml](experiments/matrices/demo.yaml) (mocked model, no API key). Use [experiments/matrices/full.yaml](experiments/matrices/full.yaml) for the full benchmark (4 tool sets × 5 cases) and [experiments/matrices/ci.yaml](experiments/matrices/ci.yaml) for CI smoke (2 cells).
+Default run target when `--matrix` is omitted: [experiments/matrices/demo.yaml](experiments/matrices/demo.yaml) (mocked model, no API key). Use [experiments/matrices/smoke.yaml](experiments/matrices/smoke.yaml) for a quick API smoke (2 cells) and [experiments/matrices/full.yaml](experiments/matrices/full.yaml) for the full benchmark (4 tool sets × 5 cases; CI runs this matrix).
 
 ### 6. Run
 
@@ -265,7 +265,7 @@ The following are **reference implementations**, not requirements for your fork:
 | [experiments/models/](experiments/models/)                                        | Sample model presets (`minimax-m2.7.yaml`, …)                             |
 | [experiments/tool_sets/](experiments/tool_sets/)                                  | Sample stacks (reference-style, OpenCrabs-style ports, hypothesis variants) |
 | [experiments/cases/](experiments/cases/) + [experiments/case_sets/](experiments/case_sets/) | Sample workspace tasks (file-outcome scoring)                             |
-| [experiments/matrices/](experiments/matrices/)                                    | Sample matrices (`demo`, `ci`, `full`, `hashline_hypotheses`, …)          |
+| [experiments/matrices/](experiments/matrices/)                                    | Sample matrices (`demo`, `smoke`, `full`, `hashline_hypotheses`, …)         |
 | [docs/README.md](docs/README.md)                                                    | Example study write-up and charts                                         |
 | [reports/](reports/)                                                              | Example matrix JSON from a past run                                       |
 

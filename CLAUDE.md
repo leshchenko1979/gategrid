@@ -17,8 +17,8 @@ uv run python -m agent_eval_matrix.matrix run --demo
 uv run python -m agent_eval_matrix.matrix run   # default: demo.yaml
 
 # Real evals (.env: MINIMAX_API_KEY)
-uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/ci.yaml
-uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/full.yaml
+uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/smoke.yaml
+uv run python -m agent_eval_matrix.matrix run --matrix experiments/matrices/full.yaml  # CI runs this
 uv run python -m agent_eval_matrix.evals run --case add_docstring --tool-set baseline
 uv run python -m agent_eval_matrix.matrix run --variant strict/verbose/minimax-m2.7
 ```

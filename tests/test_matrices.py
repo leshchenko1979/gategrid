@@ -67,9 +67,11 @@ def test_resolve_matrix_demo() -> None:
     assert resolved.variants[0].variant_id == "demo/mock"
 
 
-def test_resolve_matrix_ci() -> None:
-    resolved = resolve_matrix(EXPERIMENTS / "matrices" / "ci.yaml", EXPERIMENTS, CASES)
-    assert resolved.matrix_name == "ci"
+def test_resolve_matrix_smoke() -> None:
+    resolved = resolve_matrix(
+        EXPERIMENTS / "matrices" / "smoke.yaml", EXPERIMENTS, CASES
+    )
+    assert resolved.matrix_name == "smoke"
     assert len(resolved.variants) == 1
     assert resolved.variants[0].tooling_name == "baseline"
     assert len(resolved.cases) == 2
