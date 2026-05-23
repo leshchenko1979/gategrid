@@ -200,23 +200,23 @@ One isolated change per variant vs the **original OpenCrabs toolset**. Pass crit
 
 **Failures vs original OpenCrabs toolset:** original — [whitespace_trap_yaml_large](../experiments/cases/whitespace_trap_yaml_large.yaml); H3 — [whitespace_trap](../experiments/cases/whitespace_trap.yaml), [indent_collision](../experiments/cases/indent_collision.yaml), [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml); H1 — [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml); str_replace only — [rename_symbol_large](../experiments/cases/rename_symbol_large.yaml).
 
-![Efficiency](figures/efficiency_tokens_turns.png)
+![Variant efficiency: turns, tokens, tool failures, duration](figures/efficiency_tokens_turns.png)
 
 ![H4 cases and file size](figures/h4_cases_and_file_size.png)
 
-*Left: pass rate on the four H4 trap cases only. Right: all cases split by `size:large` (6 large, 4 small).*
+*Efficiency figure: four comparison metrics from §5. H4/size figure: left = pass on four H4 trap cases (annotated k/4); right = large (6) vs small (4) cases.*
 
 [Notebook](hashline_hypothesis_report.ipynb)
 
 ### Variant metrics (means)
 
-| Variant                    | Pass      | Avg turns | Avg tokens | Σ tool_failures | Avg duration |
-| -------------------------- | --------- | --------- | ---------- | --------------- | ------------ |
-| original OpenCrabs toolset | 9/10      | 5.3       | 30,696     | 1               | 12.6s        |
-| H1: docs fix               | 9/10      | 5.9       | 27,384     | 2               | 16.9s        |
-| H2: fuzzy replace          | **10/10** | 5.3       | 20,115     | 2               | 13.5s        |
-| H3: empty-hash read        | 7/10      | **9.0**   | **46,785** | **4**           | **25.3s**    |
-| str_replace only           | 9/10      | 4.9       | **8,412**  | 3               | 11.7s        |
+| Variant | Pass | Avg turns | Avg tokens | Σ tool_failures | Avg duration |
+| ------- | ---- | --------- | ---------- | --------------- | ------------ |
+| original OpenCrabs | 9/10 | 5.3 | 30,696 | 1 | 12.6s |
+| H1: docs fix | 9/10 | 5.9 | 27,384 | 2 | 16.9s |
+| H2: fuzzy replace | **10/10** | 5.3 | 20,115 | 2 | 13.5s |
+| H3: empty-hash read | 7/10 | **9.0** | **46,785** | **4** | **25.3s** |
+| str_replace only | 9/10 | 4.9 | **8,412** | 3 | 11.7s |
 
 ---
 
