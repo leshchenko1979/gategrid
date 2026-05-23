@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v8
         with:
           python-version: "3.11"
           enable-cache: true
@@ -32,7 +32,7 @@ jobs:
         run: uv run --frozen --no-dev python -m agent_eval_matrix.matrix run --matrix experiments/matrices/full.yaml
 
       - name: Upload Eval Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: eval-report-${{ github.sha }}
