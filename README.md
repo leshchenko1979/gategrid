@@ -12,21 +12,23 @@ Each matrix run is `tool_sets × models × cases`, executed in an isolated works
 
 ## Who it's for
 
-| Audience | Typical goal |
-|----------|----------------|
+
+| Audience                  | Typical goal                                                |
+| ------------------------- | ----------------------------------------------------------- |
 | Tool / protocol designers | Compare full agent stacks (API shape, tool count, behavior) |
-| Agent / prompt engineers | A/B prompts and tool subsets on the same cases |
-| Model / provider teams | Same stack, different models or endpoints |
-| Platform / QA | Pin a matrix + case pack as a regression gate in CI |
-| Researchers | Tag cases, run hypothesis matrices, extend reporting |
-| Cost / efficiency owners | Compare turns, tokens, tool failures, and latency |
-| Debuggers | Reproduce one matrix cell quickly |
+| Agent / prompt engineers  | A/B prompts and tool subsets on the same cases              |
+| Model / provider teams    | Same stack, different models or endpoints                   |
+| Platform / QA             | Pin a matrix + case pack as a regression gate in CI         |
+| Researchers               | Tag cases, run hypothesis matrices, extend reporting        |
+| Cost / efficiency owners  | Compare turns, tokens, tool failures, and latency           |
+| Debuggers                 | Reproduce one matrix cell quickly                           |
+
 
 ## What you can do
 
 **Compare tool surfaces** — define `tool_sets` that list per-tool modules and a `system_prompt`; the matrix runs every combination you declare.
 
-**Compare models** — reference model preset stems from [`experiments/models/`](experiments/models/) in your matrix `models:` list, or filter to one cell with `--variant <tool-set>/<model-preset>`.
+**Compare models** — reference model preset stems from `[experiments/models/](experiments/models/)` in your matrix `models:` list, or filter to one cell with `--variant <tool-set>/<model-preset>`.
 
 **Compare tasks** — group cases in `case_sets` or list them inline; each case supplies a natural-language `instruction`, sandbox seed content, and expected outcome.
 
@@ -34,15 +36,17 @@ Each matrix run is `tool_sets × models × cases`, executed in an isolated works
 
 **Gate CI** — run a pinned matrix on `workflow_dispatch` (or re-enable push/PR), upload JSON reports as artifacts, optional Logfire traces.
 
-Commands use placeholders below; bundled names under [`experiments/`](experiments/) are **examples only**.
+Commands use placeholders below; bundled names under `[experiments/](experiments/)` are **examples only**.
 
-| Workflow | Command |
-|----------|---------|
-| Full matrix (default spec) | `uv run python -m harness.matrix run` |
-| Custom matrix | `uv run python -m harness.matrix run --matrix path/to/matrix.yaml` |
-| One variant | `uv run python -m harness.matrix run --variant <tool-set>/<model-preset>` |
-| One case | `uv run python -m harness.evals run --case <name> --tool-set <tool-set> --model <preset>` |
-| Debug trace | add `--trace` |
+
+| Workflow                   | Command                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| Full matrix (default spec) | `uv run python -m harness.matrix run`                                                     |
+| Custom matrix              | `uv run python -m harness.matrix run --matrix path/to/matrix.yaml`                        |
+| One variant                | `uv run python -m harness.matrix run --variant <tool-set>/<model-preset>`                 |
+| One case                   | `uv run python -m harness.evals run --case <name> --tool-set <tool-set> --model <preset>` |
+| Debug trace                | add `--trace`                                                                             |
+
 
 ## How it works
 
@@ -76,30 +80,36 @@ flowchart TB
   runner --> Logfire
 ```
 
+
+
 **Matrix axes** (all defined in YAML):
 
-| Axis | Where |
-|------|--------|
+
+| Axis                        | Where                                           |
+| --------------------------- | ----------------------------------------------- |
 | Tool surface + instructions | `tool_sets/*.yaml` → `tools:` + `system_prompt` |
-| Model | `models/*.yaml` + `matrices/*.yaml` → `models:` |
-| Tasks | `cases/*.yaml` via `cases:` or `case_sets:` |
+| Model                       | `models/*.yaml` + `matrices/*.yaml` → `models:` |
+| Tasks                       | `cases/*.yaml` via `cases:` or `case_sets:`     |
 
-**Scoring:** pass/fail is driven by evaluators in [`src/harness/evaluators.py`](src/harness/evaluators.py). The **example case pack** in this repo uses exact primary-file content match (`FileContentMatch`). Auxiliary evaluators record tool discipline and efficiency; they support comparison but do not override pass/fail today. Forks can plug in different evaluators or case shapes.
 
-**Sandbox:** each case runs in a fresh temp directory. Agents should use workspace-relative paths; [`harness.sandbox`](src/harness/sandbox.py) normalizes paths inside the workspace (including macOS `/private/var` vs `/var`).
+**Scoring:** pass/fail is driven by evaluators in `[src/harness/evaluators.py](src/harness/evaluators.py)`. The **example case pack** in this repo uses exact primary-file content match (`FileContentMatch`). Auxiliary evaluators record tool discipline and efficiency; they support comparison but do not override pass/fail today. Forks can plug in different evaluators or case shapes.
+
+**Sandbox:** each case runs in a fresh temp directory. Agents should use workspace-relative paths; `[harness.sandbox](src/harness/sandbox.py)` normalizes paths inside the workspace (including macOS `/private/var` vs `/var`).
 
 ## Observability
 
-| Layer | Enable | What you get |
-|-------|--------|----------------|
-| **Stdout** | always | Logs + `print_summary` (pass rate, per-variant averages) |
-| **Local JSON** | always | `reports/{timestamp}_{commit_sha}_matrix.json` — full matrix [`MatrixReport`](src/harness/models.py) |
-| **JSONL traces** | `--trace` | `reports/traces/{run_id}.jsonl` — lightweight start/done events |
-| **Logfire** | `LOGFIRE_TOKEN` | pydantic-ai instrumentation; spans `eval/<variant>/<case>`; `send_to_logfire='if-token-present'` |
+
+| Layer            | Enable          | What you get                                                                                         |
+| ---------------- | --------------- | ---------------------------------------------------------------------------------------------------- |
+| **Stdout**       | always          | Logs + `print_summary` (pass rate, per-variant averages)                                             |
+| **Local JSON**   | always          | `reports/{timestamp}_{commit_sha}_matrix.json` — full matrix `[MatrixReport](src/harness/models.py)` |
+| **JSONL traces** | `--trace`       | `reports/traces/{run_id}.jsonl` — lightweight start/done events                                      |
+| **Logfire**      | `LOGFIRE_TOKEN` | pydantic-ai instrumentation; spans `eval/<variant>/<case>`; `send_to_logfire='if-token-present'`     |
+
 
 **Logfire:** add `LOGFIRE_TOKEN` to `.env` locally or as a GitHub Actions secret. View runs in the [Logfire](https://logfire.pydantic.dev/docs) UI.
 
-**Reports on GitHub:** the example workflow [`.github/workflows/evals.yml`](.github/workflows/evals.yml) uploads `reports/*.json` as an artifact (`eval-report-<sha>`, 90-day retention, `if: always()`). Download: **Actions** → workflow run → **Artifacts**. JSONL traces are **not** included in that glob. Set repo secrets to match your presets’ `api_key_env` names (the example workflow uses `MINIMAX_API_KEY` and optional `LOGFIRE_TOKEN`). The workflow is `workflow_dispatch` only until push/PR triggers are re-enabled.
+**Reports on GitHub:** the example workflow `[.github/workflows/evals.yml](.github/workflows/evals.yml)` uploads `reports/*.json` as an artifact (`eval-report-<sha>`, 90-day retention, `if: always()`). Download: **Actions** → workflow run → **Artifacts**. JSONL traces are **not** included in that glob. Set repo secrets to match your presets’ `api_key_env` names (the example workflow uses `MINIMAX_API_KEY` and optional `LOGFIRE_TOKEN`). The workflow is `workflow_dispatch` only until push/PR triggers are re-enabled.
 
 Compare runs across commits via artifact JSON; debug a single cell with `harness.evals` and `--trace` without Logfire.
 
@@ -151,13 +161,15 @@ base_url: https://api.example.com/v1
 api_key_env: MY_PROVIDER_API_KEY
 ```
 
-| Field | Purpose |
-|-------|---------|
-| Filename stem (`my-model.yaml`) | `models:` in matrix YAML; `--variant .../my-model` |
-| `provider` | `openai` (OpenAI-compatible), `anthropic`, or `google` |
-| `model_name` | Default model string sent to the API |
-| `base_url` | Required for `openai`; optional for others |
-| `api_key_env` | Env var from step 1 |
+
+| Field                           | Purpose                                                |
+| ------------------------------- | ------------------------------------------------------ |
+| Filename stem (`my-model.yaml`) | `models:` in matrix YAML; `--variant .../my-model`     |
+| `provider`                      | `openai` (OpenAI-compatible), `anthropic`, or `google` |
+| `model_name`                    | Default model string sent to the API                   |
+| `base_url`                      | Required for `openai`; optional for others             |
+| `api_key_env`                   | Env var from step 1                                    |
+
 
 Optional runtime overrides per preset: `{PREFIX}_MODEL` and `{PREFIX}_BASE_URL`, where `PREFIX` is derived from `api_key_env` by stripping `_API_KEY` (e.g. `MINIMAX_API_KEY` → `MINIMAX_MODEL`).
 
@@ -165,7 +177,7 @@ For `anthropic` or `google` presets, install optional extras: `uv sync --extra a
 
 ### 3. Compose tools
 
-1. Add `experiments/tooling/<family>/<tool>.py` — one tool function per file, delegating to [`harness.tools`](src/harness/tools.py) or your own logic with `FileEditDeps`.
+1. Add `experiments/tooling/<family>/<tool>.py` — one tool function per file, delegating to `[harness.tools](src/harness/tools.py)` or your own logic with `FileEditDeps`.
 2. Do **not** put `SYSTEM_PROMPT`, `TOOLS`, or `register(agent)` in tool modules.
 3. Create `experiments/tool_sets/my_set.yaml`:
 
@@ -215,7 +227,7 @@ case_sets:
 # or: cases: [my_case]
 ```
 
-Default run target when `--matrix` is omitted: [`experiments/matrices/full.yaml`](experiments/matrices/full.yaml) (example content in this repo).
+Default run target when `--matrix` is omitted: `[experiments/matrices/full.yaml](experiments/matrices/full.yaml)` (example content in this repo).
 
 ### 6. Run
 
@@ -232,33 +244,32 @@ After `source .venv/bin/activate`, you can omit `uv run`. Entry points: `harness
 
 The following are **reference implementations**, not requirements for your fork:
 
-| Path | Contents |
-|------|----------|
-| [`experiments/models/`](experiments/models/) | Sample model presets (`minimax-m2.7.yaml`, …) |
-| [`experiments/tool_sets/`](experiments/tool_sets/) | Sample stacks (harness-style, OpenCrabs-style ports, hypothesis variants) |
-| [`experiments/cases/`](experiments/cases/) + [`case_sets/`](experiments/case_sets/) | Sample workspace tasks (file-outcome scoring) |
-| [`experiments/matrices/`](experiments/matrices/) | Sample matrices (`full`, `ci`, `hashline_hypotheses`, …) |
-| [`docs/`](docs/README.md) | Example study write-up and charts |
-| [`reports/`](reports/) | Example matrix JSON from a past run |
+
+| Path                                                                                | Contents                                                                  |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `[experiments/models/](experiments/models/)`                                        | Sample model presets (`minimax-m2.7.yaml`, …)                             |
+| `[experiments/tool_sets/](experiments/tool_sets/)`                                  | Sample stacks (harness-style, OpenCrabs-style ports, hypothesis variants) |
+| `[experiments/cases/](experiments/cases/)` + `[case_sets/](experiments/case_sets/)` | Sample workspace tasks (file-outcome scoring)                             |
+| `[experiments/matrices/](experiments/matrices/)`                                    | Sample matrices (`full`, `ci`, `hashline_hypotheses`, …)                  |
+| `[docs/](docs/README.md)`                                                           | Example study write-up and charts                                         |
+| `[reports/](reports/)`                                                              | Example matrix JSON from a past run                                       |
+
 
 Example preset in `.env.example`: `minimax-m2.7` / `MINIMAX_API_KEY`.
 
 ## Layout
 
-| Path | Role |
-|------|------|
-| `experiments/cases/` | One YAML per task |
-| `experiments/case_sets/` | Named case lists |
-| `experiments/tool_sets/` | `system_prompt` + `tools:` |
-| `experiments/tooling/` | Per-tool `.py` modules |
-| `experiments/models/` | Model preset YAML (`provider`, `model_name`, `api_key_env`, …) |
-| `experiments/matrices/` | Runnable cross-product specs |
-| `src/harness/` | Loader, sandbox, CLI, model factory |
 
-Operator details (metrics definitions, example matrix commands): [`CLAUDE.md`](CLAUDE.md).
+| Path                     | Role                                                           |
+| ------------------------ | -------------------------------------------------------------- |
+| `experiments/cases/`     | One YAML per task                                              |
+| `experiments/case_sets/` | Named case lists                                               |
+| `experiments/tool_sets/` | `system_prompt` + `tools:`                                     |
+| `experiments/tooling/`   | Per-tool `.py` modules                                         |
+| `experiments/models/`    | Model preset YAML (`provider`, `model_name`, `api_key_env`, …) |
+| `experiments/matrices/`  | Runnable cross-product specs                                   |
+| `src/harness/`           | Loader, sandbox, CLI, model factory                            |
 
-## Limits (today)
 
-- Example cases use workspace file outcomes; other pass criteria require custom evaluators / case types.
-- Example pass/fail is exact file content match (no fuzzy grader).
-- CI example runs `experiments/matrices/ci.yaml` on manual dispatch only.
+Operator details (metrics definitions, example matrix commands): `[CLAUDE.md](CLAUDE.md)`.
+
