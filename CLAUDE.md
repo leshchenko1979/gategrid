@@ -1,8 +1,10 @@
-# harness_test — LLM file-editing eval harness
+# harness_test — LLM agent eval harness
+
+**User-facing pitch and quick start:** [README.md](README.md) (framework-first; bundled `experiments/` content is examples only).
 
 ## Purpose
 
-Matrix evals over **cases** (YAML) × **tool sets** (YAML) × **models** (presets in `config.py`). Matrices declare the runnable cross-product; tool sets hold `system_prompt` + `tools:` paths; each `.py` under `tooling/` exports one tool function.
+Matrix evals over **cases** (YAML) × **tool sets** (YAML) × **models** (YAML). Matrices under `experiments/matrices/` declare the runnable cross-product; tool sets hold `system_prompt` + `tools:` paths; each `.py` under `tooling/` exports one tool function.
 
 ## Run locally
 
@@ -24,6 +26,7 @@ After `source .venv/bin/activate`, omit the `uv run` prefix.
 
 - `experiments/tool_sets/` — agent prompts + tool path lists (YAML only bundling)
 - `experiments/case_sets/` — named case lists
+- `experiments/models/` — model presets (`provider`, `model_name`, `api_key_env`, …)
 - `experiments/matrices/` — runnable matrix definitions (`tool_sets`, `models`, `cases`/`case_sets`)
 - `experiments/cases/` — case content (one YAML per case)
 - `experiments/tooling/harness/` — thin wrappers over `harness.tools` (one tool per file)
@@ -43,15 +46,17 @@ After `source .venv/bin/activate`, omit the `uv run` prefix.
 
 ## Models
 
-- Presets in `src/harness/config.py` (`MODEL_PRESETS`).
-- Matrix `models` lists preset keys (e.g. `minimax-m2.7`).
+- Presets in `experiments/models/*.yaml` (registry key = filename stem).
+- Matrix `models` lists preset stems (e.g. `minimax-m2.7`).
+- Providers: `openai` (default install), `anthropic`, `google` (optional extras in pyproject.toml).
+- Per-preset env overrides: `{PREFIX}_MODEL`, `{PREFIX}_BASE_URL` where prefix is derived from `api_key_env` (e.g. `MINIMAX_API_KEY` → `MINIMAX_MODEL`).
 
 ## Hashline hypothesis matrix
 
 Isolated OpenCrabs variants (H1 doc fix, H2 fuzzy `str_replace`, H3 empty-hash collisions) vs `opencrabs_original` and `baseline`:
 
 ```bash
-python -m harness.matrix run --matrix experiments/matrices/hashline_hypotheses.yaml
+uv run python -m harness.matrix run --matrix experiments/matrices/hashline_hypotheses.yaml
 ```
 
 **10 cases** (4 small + 6 large ~100–150 lines): indent traps, ambiguous replace, hash collisions, docstring insert, rename — **50 matrix runs** (5 variants × 10 cases).

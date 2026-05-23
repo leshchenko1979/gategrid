@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
+
+ProviderKind = Literal["openai", "anthropic", "google"]
 
 
 class FileEditDeps(BaseModel):
@@ -35,6 +37,19 @@ class ToolSet(BaseModel):
     name: str
     system_prompt: str
     tools: list[str]
+
+
+class ModelPreset(BaseModel):
+    provider: ProviderKind
+    model_name: str
+    api_key_env: str
+    base_url: str | None = None
+
+    @model_validator(mode="after")
+    def require_openai_base_url(self) -> ModelPreset:
+        if self.provider == "openai" and not self.base_url:
+            raise ValueError("openai provider requires base_url")
+        return self
 
 
 class CaseSet(BaseModel):

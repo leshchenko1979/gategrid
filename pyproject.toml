@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "harness-test"
 version = "0.1.0"
-description = "Evaluation harness for LLM file-editing agents"
+description = "Matrix evaluation harness for sandboxed LLM agents"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -24,6 +24,9 @@ harness-evals = "harness.evals_cli:main"
 where = ["src"]
 
 [project.optional-dependencies]
+anthropic = ["pydantic-ai-slim[anthropic]"]
+google = ["pydantic-ai-slim[google]"]
+all-providers = ["pydantic-ai-slim[openai,anthropic,google,logfire]"]
 dev = ["pytest>=8.0"]
 report = ["pandas>=2.0", "matplotlib>=3.8", "jupyter>=1.0"]
 

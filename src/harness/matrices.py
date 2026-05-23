@@ -7,7 +7,14 @@ from pydantic import BaseModel
 
 from harness.cases import load_cases_by_names
 from harness.load_tooling import load_tool_functions
-from harness.models import CaseSet, EditCase, ExperimentVariant, MatrixConfig, ToolSet
+from harness.models import (
+    CaseSet,
+    EditCase,
+    ExperimentVariant,
+    MatrixConfig,
+    ModelPreset,
+    ToolSet,
+)
 
 
 def _load_yaml(path: Path) -> dict:
@@ -52,6 +59,21 @@ def build_tool_set_registry(experiments_dir: Path) -> dict[str, ToolSet]:
         if tool_set.name in registry:
             raise ValueError(f"Duplicate tool set name {tool_set.name!r}")
         registry[tool_set.name] = tool_set
+    return registry
+
+
+def build_model_registry(experiments_dir: Path) -> dict[str, ModelPreset]:
+    root = _registry_yaml_dir(experiments_dir, "models")
+    registry: dict[str, ModelPreset] = {}
+    if not root.is_dir():
+        return registry
+    for path in sorted(root.glob("*.yaml")):
+        data = _load_yaml(path)
+        preset = ModelPreset.model_validate(data)
+        model_id = path.stem
+        if model_id in registry:
+            raise ValueError(f"Duplicate model preset {model_id!r}")
+        registry[model_id] = preset
     return registry
 
 
@@ -118,6 +140,11 @@ def resolve_matrix(
 
     tool_set_registry = build_tool_set_registry(experiments_dir)
     case_set_registry = _build_case_set_registry(experiments_dir)
+    model_registry = build_model_registry(experiments_dir)
+
+    for model_id in matrix.models:
+        if model_id not in model_registry:
+            raise ValueError(f"Unknown model preset {model_id!r}")
 
     variants: list[ExperimentVariant] = []
     for tool_set_name in matrix.tool_sets:

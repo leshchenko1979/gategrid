@@ -9,7 +9,11 @@ from dotenv import load_dotenv
 from harness.cases import load_cases
 from harness.observability import get_commit_sha, setup_observability
 from harness.report import new_matrix_report, print_summary, write_aggregate_report
-from harness.matrices import build_tool_set_registry, variant_from_tool_set
+from harness.matrices import (
+    build_model_registry,
+    build_tool_set_registry,
+    variant_from_tool_set,
+)
 from harness.task import evaluate_case
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,6 +41,10 @@ async def run_single_case(
     tool_set = registry.get(name)
     if tool_set is None:
         raise SystemExit(f"Unknown tool set: {name!r}")
+
+    model_registry = build_model_registry(EXPERIMENTS)
+    if model_id not in model_registry:
+        raise SystemExit(f"Unknown model preset: {model_id!r}")
 
     variant = variant_from_tool_set(tool_set, model_id, EXPERIMENTS)
 
