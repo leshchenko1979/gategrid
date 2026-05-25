@@ -14,7 +14,7 @@ Any code change follows **steps 1–6**. The user approves at **step 3 only** (t
 | Step | Mode | Action | Gate |
 | ---- | ---- | ------ | ---- |
 | **1** | Plan | Scope, files, exit commands, clean-break checks; link checklist rows. Plan file: `~/.cursor/plans/<task>_*.md` only (not in-repo). | — |
-| **2** | Plan | Pre-impl review (`code-reviewer`, readonly): trim scope; DX if user-facing; **Deferred** for cuts. Revise plan; **no code**. | Scope trimmed; exits set; **Deferred** if anything cut; plan stand-alone; incremental edits keep **previous plan** |
+| **2** | Plan | Pre-impl review (`code-reviewer`, readonly): trim scope; favor simplicity; DX if user-facing; **Deferred** for cuts. Revise plan; **no code**. | Scope trimmed; plan favors simplicity; exits set; **Deferred** if anything cut; plan stand-alone; incremental edits keep **previous plan** |
 | **3** | Plan → Agent | Present plan; wait for approval; roadmap ask if **Deferred** (below). | Roadmap ask if **Deferred**; explicit approval |
 | **4** | Agent | Run exit tests/commands; fix failures. No extra confirmation prompts. | — |
 | **5** | Agent | Post-impl review vs approved plan + [clean break](docs/roadmap/engineering/v1-implementation-checklist.md#clean-break-policy-v1--no-legacy-path). | Diff matches plan; no legacy creep |
@@ -24,7 +24,7 @@ Before step 4: reread [CODE.md](CODE.md). Boundaries: [CODE.md — what belongs]
 
 ## Step 2 — Plan review
 
-**Goals:** Smaller scope; better user-facing DX — without telegram-style compression.
+**Goals:** Smaller scope; simplicity (design, APIs, diffs); better user-facing DX — without telegram-style compression.
 
 | Lens | When relevant |
 | ---- | ------------- |
@@ -33,7 +33,7 @@ Before step 4: reread [CODE.md](CODE.md). Boundaries: [CODE.md — what belongs]
 | **Errors & discoverability** | Failures name the fix (path, flag, field); examples/README in-plan when behavior changes |
 | **Spikes** | Comparative claims → [spike-dx-competitive-analysis.md](docs/roadmap/research/spike-dx-competitive-analysis.md) A–C; split orchestration vs domain |
 
-DX vs minimal scope → **record tradeoff** in plan (default: smaller scope unless user asked for DX).
+DX vs minimal scope / simplicity → **record tradeoff** in plan (default: smaller scope and simpler shape unless user asked for DX).
 
 **Deferred:** One line per cut (what + why). Never silently drop user- or spike-requested work.
 
