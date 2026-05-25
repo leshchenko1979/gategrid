@@ -2,9 +2,19 @@
 
 **Matrix evaluation for LLM agents — pytest for your cases, codecov for your regressions.**
 
-`pip install gategrid` · Python ≥3.11 · [Architecture](docs/roadmap/architecture-vision.md)
+Python ≥3.11 · install from this repo (`uv sync` / `pip install -e .`) — **PyPI publish pending** · [Architecture](docs/roadmap/architecture-vision.md)
 
 **More:** [Extended product brief](docs/roadmap/README-pitch-draft.md) · [Battlecard](docs/roadmap/battlecard.md) · [Competitive landscape](docs/roadmap/competitive-landscape.md) · [v1 checklist](docs/roadmap/v1-implementation-checklist.md)
+
+### Implementation status (2026-05)
+
+| Area | Status |
+| ---- | ------ |
+| **Phases 0–4** (schemas, `validate` / `run`, `@case` + `@evaluator`, `gate` / `baseline update`, MCP + pydantic-ai path) | **Shipped** — see [v1 checklist](docs/roadmap/v1-implementation-checklist.md) |
+| **Phase 5** (PR sampling execution, `--baseline-from-artifact`, dedicated PR/main workflows, tiered CI) | **In progress** — CI runs smoke + hashline-smoke only ([`.github/workflows/gategrid.yml`](.github/workflows/gategrid.yml)) |
+| **OpenCrabs dogfood** (Spike C) | **Done** in [`examples/opencrabs/`](examples/opencrabs/) — gate/baseline loop verified locally |
+| **Legacy `agent_eval_matrix`** | **Removed** — Gategrid-only harness |
+| **Post-v1** (HTML report, `gategrid init`, marketplace Action) | Not started ([Phase 6](docs/roadmap/v1-implementation-checklist.md#phase-6--post-v1-defer)) |
 
 ---
 
@@ -88,7 +98,7 @@ flowchart LR
 - **One profile per gate** — PR and `main` compare against the same `baselines/<profile>.json`, not a mixed fleet baseline.
 - **CI that means something** — PR: `run` → `gate` (never `baseline update` on PR). `main`: `run` → `gate` → `baseline update`.
 - **Three layers of pass** — cell (`gate` evaluators), regression (vs baseline), optional hard limits on this run.
-- **Cost control** — optional PR sampling shrinks how many cases run without changing the gated profile.
+- **Cost control** — `run.sample` is in the matrix schema; executor sampling is planned ([Phase 5.5](docs/roadmap/v1-implementation-checklist.md#phase-5--ci-productization)).
 - **Bring your stack** — `RuntimeAdapter`, optional `gategrid[pydantic-ai]`, optional `gategrid[mcp]`, optional [contrib](src/gategrid/contrib/README.md) helpers (file-edit sandbox, MCP profile config, LLM-judge base class).
 
 ---
@@ -99,11 +109,13 @@ flowchart LR
 git clone https://github.com/leshchenko1979/gategrid.git
 cd gategrid
 uv sync --extra dev
-gategrid validate --matrix examples/gategrid/matrices/smoke.yaml
-gategrid run --matrix examples/gategrid/matrices/smoke.yaml
+uv run gategrid validate --matrix examples/gategrid/matrices/smoke.yaml
+uv run gategrid run --matrix examples/gategrid/matrices/smoke.yaml
 ```
 
 Artifacts land under `.gategrid/reports/` and `.gategrid/baselines/` (override with `GATEGRID_HOME`).
+
+**CLI today:** `validate` · `run` · `gate` · `baseline update` (`gategrid baseline update --from-report … --profile …`). Fingerprint mismatch on gate emits a warning; partial runs use `--case` with the same caveat.
 
 ---
 
@@ -197,11 +209,19 @@ Detail: [docs/roadmap/battlecard.md](docs/roadmap/battlecard.md) · [docs/roadma
 
 ## Install
 
+From a clone (recommended until [PyPI publish](docs/roadmap/v1-implementation-checklist.md#rename--publish)):
+
 ```bash
-pip install gategrid
-pip install "gategrid[pydantic-ai]"        # optional LLM runtime
-pip install "gategrid[pydantic-ai,mcp]"   # optional MCP toolsets (pydantic-ai path)
-pip install "gategrid[mcp]"               # optional MCP SDK only (bring-your-own adapter)
+uv sync --extra dev
+# or: pip install -e ".[dev]"
+```
+
+Optional extras (same names when published):
+
+```bash
+uv sync --extra pydantic-ai              # LLM runtime (pydantic-ai)
+uv sync --extra pydantic-ai --extra mcp  # MCP toolsets (pydantic-ai path)
+uv sync --extra mcp                      # MCP SDK only (bring-your-own adapter)
 ```
 
 Python ≥3.11. Secrets via environment only.
@@ -210,14 +230,25 @@ Python ≥3.11. Secrets via environment only.
 
 ## Contributing and development
 
-Monorepo: [src/gategrid/](src/gategrid/) (framework), [examples/gategrid/](examples/gategrid/) (smoke), [examples/opencrabs/](examples/opencrabs/) (hashline study). Operator setup: [CLAUDE.md](CLAUDE.md). Coding principles: [CODE.md](CODE.md).
+Monorepo layout:
+
+| Path | Role |
+| ---- | ---- |
+| [src/gategrid/](src/gategrid/) | Framework (`cli`, executor, gate, `contrib/`, `integrations/`) |
+| [examples/gategrid/](examples/gategrid/) | Smoke + MCP gate (mock and live) |
+| [examples/file_edit/](examples/file_edit/) | `contrib/file_edit` sample |
+| [examples/opencrabs/](examples/opencrabs/) | Hashline hypothesis dogfood (Spike C) |
+| [schemas/v1/](schemas/v1/) | Frozen report/baseline/matrix JSON schemas |
+
+Operator setup: [CLAUDE.md](CLAUDE.md). Coding principles: [CODE.md](CODE.md). Roadmap tasks: [v1-implementation-checklist.md](docs/roadmap/v1-implementation-checklist.md).
 
 ```bash
 uv sync --extra dev
-pytest tests/test_gategrid_phase0.py tests/test_gategrid_phase1.py \
-  tests/test_gategrid_phase2.py tests/test_gategrid_phase3.py \
-  tests/test_gategrid_phase4.py
+uv run pytest tests/
+uv run gategrid validate --matrix examples/gategrid/matrices/smoke.yaml
 ```
+
+CI mirrors the above plus `hashline-smoke` on mock ([gategrid.yml](.github/workflows/gategrid.yml)).
 
 ---
 
