@@ -4,7 +4,7 @@
 
 **Positioning (one line):** Self-hosted matrix runner that turns *your* agent/MCP test suite into a **codecov-style CI gate** for **one production profile** at a time — not another prompt benchmarker or observability SaaS.
 
-**Related:** [battlecard.md](battlecard.md) (promptfoo vs DeepEval vs us) · [spike-dx-competitive-analysis.md](../research/spike-dx-competitive-analysis.md) (per-spike DX vs competitors) · [v1-implementation-checklist.md](../engineering/v1-implementation-checklist.md) · [Product naming](#product-naming-revisited)
+**Related:** [battlecard.md](battlecard.md) (promptfoo vs DeepEval vs us) · [agent-arena-competitive-landscape.md](../research/agent-arena-competitive-landscape.md) (agent benchmark / leaderboard space) · [mcp-tool-eval-market-research.md](../research/mcp-tool-eval-market-research.md) (what tool/MCP authors eval against) · [skillopt-tool-surface-optimization.md](../research/skillopt-tool-surface-optimization.md) (SkillOpt; post-v1 surface optimization) · [spike-dx-competitive-analysis.md](../research/spike-dx-competitive-analysis.md) (per-spike DX vs competitors) · [v1-implementation-checklist.md](../engineering/v1-implementation-checklist.md) · [Product naming](#product-naming-revisited)
 
 ---
 
@@ -38,6 +38,7 @@ Rough tiers — stars are a proxy, not revenue or installs.
 | Research benchmarks | [inspect_ai](https://github.com/UKGovernmentBEIS/inspect_ai) | ~2.1k | Public benchmark suites |
 | Scorer library | [autoevals](https://github.com/braintrustdata/autoevals) | ~0.9k | Scorers + Braintrust cloud |
 | MCP E2E eval | [mcp-eval](https://github.com/lastmile-ai/mcp-eval) | ~23 | Agent↔MCP + OTEL |
+| Skill / prompt optimization | [SkillOpt](https://github.com/microsoft/SkillOpt) | ~1.9k | Text-space skill training + val gate → `best_skill.md` |
 | Tiny CI gates | [llm-quality-gate](https://github.com/Emart29/llm-quality-gate) | ~1 | Fixed metrics PR gate |
 
 **LangSmith** — traction via LangChain cloud; open SDK repo is small. **Braintrust** — product is SaaS-first; `autoevals` is the OSS scorer surface.
@@ -129,6 +130,13 @@ Legend: **●** first-class · **◐** partial / DIY · **○** weak / different
 - **Ragas:** RAG optimization and metrics; weak agent CI gate story.
 - **Inspect AI:** Public benchmarks and safety evals; not product CI on private cases.
 
+### SkillOpt — improvement artifact vs our gate
+
+- **Wins:** Produces **`best_skill.md`** with measured uplift on six public benchmarks; validation-gated edits; same scorer for baselines (TextGrad, GEPA, EvoSkill, etc.).
+- **Loses to us when:** Buyer needs **git regression baselines** on **private case packs**, **matrix** (profiles × models), **MCP L2** routing gates, or **“merge only if gate passes”** on their repo — not a hosted training run on SearchQA.
+- **Complement:** SkillOpt (or similar) proposes surface changes; Gategrid **proves** they do not regress production profile. Post-v1 direction: scoped **tool/description optimization** gated by our baseline — [skillopt-tool-surface-optimization.md](../research/skillopt-tool-surface-optimization.md).
+- **Paper:** [arXiv:2605.23904](https://arxiv.org/abs/2605.23904) · **Repo:** [microsoft/SkillOpt](https://github.com/microsoft/SkillOpt)
+
 ### Niche regression gates
 
 - **[FairEval-Suite](https://github.com/kritibehl/FairEval-Suite):** baseline vs candidate + stats; no matrix/MCP product.
@@ -145,8 +153,12 @@ Legend: **●** first-class · **◐** partial / DIY · **○** weak / different
 | Gate vs benchmark matrix personas | Synthetic dataset factories |
 | Pluggable `RuntimeAdapter` + `@case` / `@evaluator` | Direct MCP protocol testing |
 | Like-for-like + overall + hard limits | Deterministic LLM reproduction |
+| **Post-v1 arena:** file-edit volume packs, proxy-mined tool metrics, trajectory velocity ([agent-arena-competitive-landscape.md](../research/agent-arena-competitive-landscape.md)) | SWE-bench / Harbor as *the* coding leaderboard; long-running agent farms |
+| **Post-v1 surface opt:** gate-gated tool/skill description search on one profile ([skillopt-tool-surface-optimization.md](../research/skillopt-tool-surface-optimization.md)) | Full SkillOpt-style multi-benchmark training product in core |
 
 **Primary win targets:** promptfoo users who need Python agent loops + git baselines; DeepEval users who outgrow pytest files without matrix/gate; MCP authors evaluating LLM-mediated E2E.
+
+**Eval layers (L0–L3):** Gategrid owns **L2 routing + L3 outcome gates** with git baselines; **L0 contract** (schema cassettes) and **L1 handler** tests are adjacent — integrate Inspector/pytest, do not duplicate in core. Full research: [mcp-tool-eval-market-research.md](../research/mcp-tool-eval-market-research.md).
 
 **Usually lose to:** Teams standardized on Langfuse/LangSmith/Braintrust; security buyers wanting promptfoo red team only.
 
@@ -207,6 +219,7 @@ MCP / agents         →  messaging, not acronym (avoid "AEM")
 
 ## See also
 
+- [agent-arena-competitive-landscape.md](../research/agent-arena-competitive-landscape.md) — SWE-bench, Harbor, τ-bench, vendor leaderboards vs planned arena
 - [spike-dx-competitive-analysis.md](../research/spike-dx-competitive-analysis.md) — measured DX vs competitors per dogfood spike (Tasks A/B/C)
 - [battlecard.md](battlecard.md) — sales/engineering one-pager vs promptfoo and DeepEval
 - [v1-implementation-checklist.md](../engineering/v1-implementation-checklist.md) — build order to reach competitive parity on the wedge

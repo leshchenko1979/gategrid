@@ -249,6 +249,7 @@ gategrid gate --matrix examples/gategrid/matrices/ci-gate-mock.yaml --root examp
 | 6.10    | [ ] **Matrix wall-time budget** — `run.max_wall_time_s`: stop scheduling new cells when elapsed cap exceeded; record skipped keys like sampling; gate treats skips as neither pass nor fail; optional per-cell `timeout_s` later (ADOPT-006) | ADOPT-006 |
 | 6.11    | [ ] **Bench report compare (product)** — diff two `*_matrix.json` (cell pass flips, per-profile totals). Conventions: [bench-analysis.md](../../guides/bench-analysis.md) | — |
 | 6.12    | [ ] **Run summary: failure taxonomy + flaky count (product)** — stderr or report metadata on `run` exit. Conventions: [bench-analysis.md](../../guides/bench-analysis.md) | — |
+| 6.13    | [ ] **Tool / skill surface optimization (research → product)** — selection vs gate case tags; outer loop (contrib or CLI) proposing bounded MCP/profile text edits; merge only if `gate` passes; spike on dogfood MCP pack. Not SkillOpt parity | ADOPT-024 · [skillopt-tool-surface-optimization.md](../research/skillopt-tool-surface-optimization.md) |
 
 
 **6.8 evidence:** OpenCrabs `hashline-bench` (MiniMax) lost 2/50 cells to 429 — [dogfood-notes](../research/dogfood-notes.md). Bench matrices and CI full runs need transport-level retries so failures are not misread as model/tool regressions.

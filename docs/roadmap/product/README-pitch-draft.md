@@ -6,7 +6,7 @@
 
 > **Canonical product page:** [README.md](../../../README.md) — problem, gate vs benchmark, quick start, case study. **This file** is extended GTM: full gate YAML, sampling, MCP, positioning tables.
 
-**Go-to-market docs:** [Competitive landscape](competitive-landscape.md) · [Battlecard vs promptfoo / DeepEval](battlecard.md) · [Spike DX analysis](../research/spike-dx-competitive-analysis.md) · [v1 build checklist](../engineering/v1-implementation-checklist.md)
+**Go-to-market docs:** [Competitive landscape](competitive-landscape.md) · [Battlecard vs promptfoo / DeepEval](battlecard.md) · [MCP/tool eval market research](../research/mcp-tool-eval-market-research.md) · [SkillOpt / surface optimization (post-v1)](../research/skillopt-tool-surface-optimization.md) · [Spike DX analysis](../research/spike-dx-competitive-analysis.md) · [v1 build checklist](../engineering/v1-implementation-checklist.md)
 
 ---
 
@@ -34,6 +34,7 @@ Most teams end up with:
 | **Single-profile CI gates** + one baseline file per lane | A mandatory multi-profile fleet baseline |
 | **CI-first** (`run`, `gate`, `baseline update` on `main` only) | Direct MCP protocol tests without an LLM |
 | **Git-native golden runs** (codecov-style) | promptfoo / LangSmith-style cloud baselines only |
+| **v1:** regression measurement and gates | **v1:** multi-benchmark skill training (SkillOpt-style); **post-v1:** [gate-gated tool/description optimization](../research/skillopt-tool-surface-optimization.md) on your case pack |
 
 Think **pytest** plus **codecov-style** compare to a stored golden run — for one stack at a time in CI, with optional **benchmark** matrices when you want to compare many profiles on the same cases.
 

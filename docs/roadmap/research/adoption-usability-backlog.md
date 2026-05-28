@@ -66,6 +66,7 @@ Pick a **primary audience** for each quarter; secondary audiences benefit from t
 | ADOPT-018 | **Trace replay** — re-run failed cell from trace (deterministic tool replay ± LLM) | Separates tool bugs from model flake for tool designers. |
 | ADOPT-019 | **Multi-outcome evaluators** — `expected_files`, `must_contain`, pytest-style checks | Byte-identical match discourages broader case authoring. |
 | ADOPT-020 | **Provider rate-limit retries (429)** — exponential backoff + jitter on LLM HTTP 429/503 in `gategrid.integrations`; config on matrix `run` or model preset; report `rate_limit_retries` per cell; distinct from `run.max_retries` (eval flake) | Bench matrices (e.g. hashline 5×10) hit provider caps; without retries, gate/bench conflate infra failure with agent failure — see [dogfood-notes](dogfood-notes.md), [v1 checklist §6.8](../engineering/v1-implementation-checklist.md#phase-6--post-v1-defer) |
+| ADOPT-024 | **Tool / skill surface optimization (gate-gated)** — outer loop: propose bounded edits to MCP descriptions / profile tool text; eval on selection case tag; accept only if full pack passes `gate` vs baseline; offline or `workflow_dispatch`, not PR search | Closes “we measure, SkillOpt improves” gap for L2 buyers — [skillopt-tool-surface-optimization.md](skillopt-tool-surface-optimization.md); checklist [6.13](../engineering/v1-implementation-checklist.md#phase-6--post-v1-defer) |
 
 ---
 
